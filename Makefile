@@ -45,26 +45,26 @@ help:
 # Levantar solo SQL Server (comando por defecto)
 db:
 	@echo "🗄️  Levantando SQL Server..."
-	docker-compose -f $(COMPOSE_FILE) -p $(PROJECT_NAME) up -d sqlserver
+	docker compose -f $(COMPOSE_FILE) -p $(PROJECT_NAME) up -d sqlserver
 	@echo "✅ SQL Server está ejecutándose en puerto 1433"
 	@echo "💡 Credenciales: sa / TriviaPassword123!"
 
 # Detener solo SQL Server
 db-stop:
 	@echo "🛑 Deteniendo SQL Server..."
-	docker-compose -f $(COMPOSE_FILE) -p $(PROJECT_NAME) stop sqlserver
+	docker compose -f $(COMPOSE_FILE) -p $(PROJECT_NAME) stop sqlserver
 
 # Ver logs de SQL Server
 db-logs:
 	@echo "📋 Logs de SQL Server:"
-	docker-compose -f $(COMPOSE_FILE) -p $(PROJECT_NAME) logs sqlserver
+	docker compose -f $(COMPOSE_FILE) -p $(PROJECT_NAME) logs sqlserver
 
 # ==== COMANDOS DE APLICACIÓN COMPLETA ====
 
 # Levantar todos los servicios
 up:
 	@echo "🚀 Levantando todos los servicios..."
-	docker-compose -f $(COMPOSE_FILE) -p $(PROJECT_NAME) --profile full up -d
+	docker compose -f $(COMPOSE_FILE) -p $(PROJECT_NAME) --profile full up -d
 	@echo "✅ Aplicación completa ejecutándose:"
 	@echo "   - SQL Server: localhost:1433"
 	@echo "   - Backend API: http://localhost:5000"
@@ -73,77 +73,77 @@ up:
 # Detener y eliminar contenedores
 down:
 	@echo "🛑 Deteniendo y eliminando contenedores..."
-	docker-compose -f $(COMPOSE_FILE) -p $(PROJECT_NAME) down
+	docker compose -f $(COMPOSE_FILE) -p $(PROJECT_NAME) down
 
 # Solo detener contenedores
 stop:
 	@echo "⏸️  Deteniendo contenedores..."
-	docker-compose -f $(COMPOSE_FILE) -p $(PROJECT_NAME) stop
+	docker compose -f $(COMPOSE_FILE) -p $(PROJECT_NAME) stop
 
 # Reiniciar todos los servicios
 restart:
 	@echo "🔄 Reiniciando servicios..."
-	docker-compose -f $(COMPOSE_FILE) -p $(PROJECT_NAME) restart
+	docker compose -f $(COMPOSE_FILE) -p $(PROJECT_NAME) restart
 
 # ==== COMANDOS DE DESARROLLO ====
 
 # Modo desarrollo con logs
 dev:
 	@echo "👨‍💻 Iniciando en modo desarrollo..."
-	docker-compose -f $(COMPOSE_FILE) -p $(PROJECT_NAME) --profile full up
+	docker compose -f $(COMPOSE_FILE) -p $(PROJECT_NAME) --profile full up
 
 # Construir imágenes
 build:
 	@echo "🔨 Construyendo imágenes..."
-	docker-compose -f $(COMPOSE_FILE) -p $(PROJECT_NAME) build
+	docker compose -f $(COMPOSE_FILE) -p $(PROJECT_NAME) build
 
 # Reconstruir imágenes desde cero
 rebuild:
 	@echo "🔨 Reconstruyendo imágenes desde cero..."
-	docker-compose -f $(COMPOSE_FILE) -p $(PROJECT_NAME) build --no-cache
+	docker compose -f $(COMPOSE_FILE) -p $(PROJECT_NAME) build --no-cache
 
 # ==== COMANDOS DE MONITOREO ====
 
 # Ver logs de todos los servicios
 logs:
 	@echo "📋 Logs de todos los servicios:"
-	docker-compose -f $(COMPOSE_FILE) -p $(PROJECT_NAME) logs
+	docker compose -f $(COMPOSE_FILE) -p $(PROJECT_NAME) logs
 
 # Seguir logs en tiempo real
 logs-f:
 	@echo "📋 Siguiendo logs en tiempo real (Ctrl+C para salir):"
-	docker-compose -f $(COMPOSE_FILE) -p $(PROJECT_NAME) logs -f
+	docker compose -f $(COMPOSE_FILE) -p $(PROJECT_NAME) logs -f
 
 # Ver estado de los servicios
 status:
 	@echo "📊 Estado de los servicios:"
-	docker-compose -f $(COMPOSE_FILE) -p $(PROJECT_NAME) ps
+	docker compose -f $(COMPOSE_FILE) -p $(PROJECT_NAME) ps
 
 # Alias para status
 ps: status
 
 # Ver logs específicos de un servicio
 logs-db:
-	docker-compose -f $(COMPOSE_FILE) -p $(PROJECT_NAME) logs sqlserver
+	docker compose -f $(COMPOSE_FILE) -p $(PROJECT_NAME) logs sqlserver
 
 logs-backend:
-	docker-compose -f $(COMPOSE_FILE) -p $(PROJECT_NAME) logs backend
+	docker compose -f $(COMPOSE_FILE) -p $(PROJECT_NAME) logs backend
 
 logs-frontend:
-	docker-compose -f $(COMPOSE_FILE) -p $(PROJECT_NAME) logs frontend
+	docker compose -f $(COMPOSE_FILE) -p $(PROJECT_NAME) logs frontend
 
 # ==== COMANDOS DE LIMPIEZA ====
 
 # Limpiar contenedores y volúmenes
 clean:
 	@echo "🧹 Limpiando contenedores y volúmenes..."
-	docker-compose -f $(COMPOSE_FILE) -p $(PROJECT_NAME) down -v
+	docker compose -f $(COMPOSE_FILE) -p $(PROJECT_NAME) down -v
 	docker system prune -f
 
 # Limpieza completa
 clean-all:
 	@echo "🧹 Limpieza completa (contenedores, volúmenes e imágenes)..."
-	docker-compose -f $(COMPOSE_FILE) -p $(PROJECT_NAME) down -v --rmi all
+	docker compose -f $(COMPOSE_FILE) -p $(PROJECT_NAME) down -v --rmi all
 	docker system prune -af
 
 # ==== COMANDOS ÚTILES ====
@@ -167,7 +167,7 @@ network:
 # Verificar health checks
 health:
 	@echo "🏥 Estado de salud de los servicios:"
-	docker-compose -f $(COMPOSE_FILE) -p $(PROJECT_NAME) ps
+	docker compose -f $(COMPOSE_FILE) -p $(PROJECT_NAME) ps
 
 # Comando por defecto cuando se ejecuta solo 'make'
 .DEFAULT_GOAL := db
