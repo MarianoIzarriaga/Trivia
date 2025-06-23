@@ -26,6 +26,18 @@ make up
 make down
 ```
 
+#
+
+
+dotnet ef migrations add Init
+dotnet ef database update
+
+##### hint if ef does not work: dotnet tool install --global dotnet-ef
+
+
+
+
+#
 ## 📦 Servicios
 
 | Servicio    | Puerto | URL                     | Descripción   |
