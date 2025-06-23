@@ -1,0 +1,70 @@
+version: '3.8'
+
+services:
+  # Base de datos SQL Server
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: trivia-sqlserver
+    environment:
+      - ACCEPT_EULA=Y
+      - SA_PASSWORD=TriviaPassword123!
+      - MSSQL_PID=Express
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqlserver_data:/var/opt/mssql
+    networks:
+      - trivia-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P TriviaPassword123! -Q 'SELECT 1'"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+
+  # Backend .NET
+  backend:
+    build:
+      context: ./trivia-backend
+      dockerfile: Dockerfile
+    container_name: trivia-backend
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:5000
+      - ConnectionStrings__DefaultConnection=Server=sqlserver,1433;Database=TriviaDB;User=sa;Password=TriviaPassword123!;TrustServerCertificate=true
+    ports:
+      - "5000:5000"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+    networks:
+      - trivia-network
+    restart: unless-stopped
+    profiles:
+      - full
+
+  # Frontend React
+  frontend:
+    build:
+      context: ./trivia-client
+      dockerfile: Dockerfile
+    container_name: trivia-frontend
+    environment:
+      - VITE_API_URL=http://localhost:5000
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    networks:
+      - trivia-network
+    restart: unless-stopped
+    profiles:
+      - full
+
+volumes:
+  sqlserver_data:
+
+networks:
+  trivia-network:
+    driver: bridge
