@@ -18,10 +18,10 @@ export function Welcome() {
     
     if (gameMode === "create") {
       const code = Math.random().toString(36).substring(2, 8).toUpperCase();
-      window.location.href = `/juego?code=${code}&name=${encodeURIComponent(playerName)}`;
+      window.location.href = `/sala?code=${code}&name=${encodeURIComponent(playerName)}&host=true`;
     } else {
       if (!roomCode.trim()) return;
-      window.location.href = `/juego?code=${roomCode}&name=${encodeURIComponent(playerName)}`;
+      window.location.href = `/sala?code=${roomCode}&name=${encodeURIComponent(playerName)}&host=false`;
     }
   };
 
