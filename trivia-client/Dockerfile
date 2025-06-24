@@ -18,9 +18,10 @@ WORKDIR /app
 RUN pnpm run build
 
 FROM node:20-alpine
-RUN npm install -g pnpm
+RUN npm install -g pnpm serve
 COPY ./package.json pnpm-lock.yaml /app/
 COPY --from=production-dependencies-env /app/node_modules /app/node_modules
 COPY --from=build-env /app/build /app/build
 WORKDIR /app
-CMD ["pnpm", "run", "start"]
+EXPOSE 3000
+CMD ["serve", "-s", "./build/client", "-l", "3000"]
