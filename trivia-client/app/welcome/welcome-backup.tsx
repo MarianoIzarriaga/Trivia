@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import logoDark from "./logo-dark.svg";
 import logoLight from "./logo-light.svg";
 import { useSala } from "../hooks/useSala";
@@ -8,16 +8,8 @@ export function Welcome() {
   const [playerName, setPlayerName] = useState("");
   const [gameMode, setGameMode] = useState<"create" | "join" | null>(null);
   const [roomCode, setRoomCode] = useState("");
-
+  
   const { sala, crearSala, unirseSala } = useSala();
-
-  // Efecto para navegar automáticamente cuando se crea o se une a una sala exitosamente
-  useEffect(() => {
-    if (sala.conectado && sala.codigo && playerName) {
-      const isHost = sala.esHost;
-      window.location.href = `/sala?code=${sala.codigo}&name=${encodeURIComponent(playerName)}&host=${isHost}`;
-    }
-  }, [sala.conectado, sala.codigo, sala.esHost, playerName]);
 
   const handleModeSelect = (mode: "create" | "join") => {
     setGameMode(mode);
@@ -30,9 +22,13 @@ export function Welcome() {
     try {
       if (gameMode === "create") {
         await crearSala(playerName);
+        // Redirigir a la sala después de crearla
+        window.location.href = `/sala?code=${sala.codigo}&name=${encodeURIComponent(playerName)}&host=true`;
       } else {
         if (!roomCode.trim()) return;
         await unirseSala(roomCode, playerName);
+        // Redirigir a la sala después de unirse
+        window.location.href = `/sala?code=${roomCode}&name=${encodeURIComponent(playerName)}&host=false`;
       }
     } catch (error) {
       // El error ya se maneja en el hook
@@ -48,13 +44,6 @@ export function Welcome() {
   };
 
   if (showNameInput) {
-    let buttonText = "Unirse";
-    if (sala.cargando) {
-      buttonText = 'Cargando...';
-    } else if (gameMode === "create") {
-      buttonText = "Crear Sala";
-    }
-
     return (
       <main className="flex items-center justify-center pt-16 pb-4">
         <div className="flex-1 flex flex-col items-center gap-16 min-h-0">
@@ -123,7 +112,7 @@ export function Welcome() {
                   disabled={!playerName.trim() || (gameMode === "join" && !roomCode.trim()) || sala.cargando}
                   className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
                 >
-                  {buttonText}
+                  {sala.cargando ? 'Cargando...' : (gameMode === "create" ? "Crear Sala" : "Unirse")}
                 </button>
               </div>
 
@@ -132,6 +121,10 @@ export function Welcome() {
                   {sala.error}
                 </div>
               )}
+                >
+                  {gameMode === "create" ? "Crear Sala" : "Unirse"}
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -156,31 +149,77 @@ export function Welcome() {
             />
           </div>
         </header>
-        <div className="max-w-[500px] w-full space-y-6 px-4">
-          <div className="rounded-3xl border border-gray-200 p-6 dark:border-gray-700 space-y-6">
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 text-center">
-              ¡Bienvenido a Trivia!
-            </h1>
-            <p className="text-gray-600 dark:text-gray-400 text-center">
-              Pon a prueba tus conocimientos en este emocionante juego de preguntas y respuestas
+        <div className="max-w-[300px] w-full space-y-6 px-4">
+          <nav className="rounded-3xl border border-gray-200 p-6 dark:border-gray-700 space-y-4">
+            <p className="leading-6 text-gray-700 dark:text-gray-200 text-center">
+              ¿Cómo quieres jugar?
             </p>
-            <div className="flex flex-col gap-4">
+            <div className="space-y-3">
               <button
                 onClick={() => handleModeSelect("create")}
-                className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium"
+                className="w-full flex items-center gap-3 p-3 text-left bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/20 dark:hover:bg-blue-900/30 rounded-lg transition-colors"
               >
-                Crear Nueva Sala
+                <CreateRoomIcon />
+                <span className="text-blue-700 dark:text-blue-300 font-medium">
+                  Crear Sala
+                </span>
               </button>
               <button
                 onClick={() => handleModeSelect("join")}
-                className="w-full px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700 font-medium"
+                className="w-full flex items-center gap-3 p-3 text-left bg-green-50 hover:bg-green-100 dark:bg-green-900/20 dark:hover:bg-green-900/30 rounded-lg transition-colors"
               >
-                Unirse a Sala
+                <JoinRoomIcon />
+                <span className="text-green-700 dark:text-green-300 font-medium">
+                  Unirse a Sala
+                </span>
               </button>
             </div>
-          </div>
+          </nav>
         </div>
       </div>
     </main>
+  );
+}
+
+// Iconos para los botones
+function CreateRoomIcon() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className="text-blue-600 dark:text-blue-400"
+    >
+      <rect width="18" height="18" x="3" y="3" rx="2" ry="2" />
+      <line x1="12" y1="8" x2="12" y2="16" />
+      <line x1="8" y1="12" x2="16" y2="12" />
+    </svg>
+  );
+}
+
+function JoinRoomIcon() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className="text-green-600 dark:text-green-400"
+    >
+      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+      <circle cx="9" cy="7" r="4" />
+      <path d="m22 11-3-3m0 0-3 3m3-3H13" />
+    </svg>
   );
 }

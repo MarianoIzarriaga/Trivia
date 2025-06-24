@@ -32,10 +32,26 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <Meta />
         <Links />
       </head>
-      <body>
+      <body suppressHydrationWarning={true}>
         {children}
         <ScrollRestoration />
         <Scripts />
+        {/* Script para limpiar atributos de extensiones del navegador */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              if (typeof window !== 'undefined') {
+                // Remover atributos agregados por extensiones del navegador
+                const body = document.body;
+                if (body) {
+                  body.removeAttribute('data-atm-ext-installed');
+                  body.removeAttribute('data-new-gr-c-s-check-loaded');
+                  body.removeAttribute('data-gr-ext-installed');
+                }
+              }
+            `,
+          }}
+        />
       </body>
     </html>
   );

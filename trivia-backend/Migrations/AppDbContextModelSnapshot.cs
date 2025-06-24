@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+using trivia_backend.Data;
 
 #nullable disable
 
@@ -71,7 +72,7 @@ namespace trivia_backend.Migrations
                     b.Property<bool>("EsCorrecta")
                         .HasColumnType("bit");
 
-                    b.Property<int?>("PreguntaId")
+                    b.Property<int>("PreguntaId")
                         .HasColumnType("int");
 
                     b.Property<string>("Texto")
@@ -96,8 +97,10 @@ namespace trivia_backend.Migrations
                     b.Property<int>("Capacidad")
                         .HasColumnType("int");
 
+                    b.Property<int?>("CreadorId")
+                        .HasColumnType("int");
+
                     b.Property<string>("Descripcion")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime>("FechaCreacion")
@@ -109,21 +112,40 @@ namespace trivia_backend.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("CreadorId");
+
                     b.ToTable("Salas");
                 });
 
             modelBuilder.Entity("trivia_backend.Models.Jugador", b =>
                 {
-                    b.HasOne("trivia_backend.Models.Sala", null)
+                    b.HasOne("trivia_backend.Models.Sala", "Sala")
                         .WithMany("Jugadores")
-                        .HasForeignKey("SalaId");
+                        .HasForeignKey("SalaId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Sala");
                 });
 
             modelBuilder.Entity("trivia_backend.Models.Respuesta", b =>
                 {
-                    b.HasOne("trivia_backend.Models.Pregunta", null)
+                    b.HasOne("trivia_backend.Models.Pregunta", "Pregunta")
                         .WithMany("Respuestas")
-                        .HasForeignKey("PreguntaId");
+                        .HasForeignKey("PreguntaId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Pregunta");
+                });
+
+            modelBuilder.Entity("trivia_backend.Models.Sala", b =>
+                {
+                    b.HasOne("trivia_backend.Models.Jugador", "creador")
+                        .WithMany()
+                        .HasForeignKey("CreadorId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("creador");
                 });
 
             modelBuilder.Entity("trivia_backend.Models.Pregunta", b =>

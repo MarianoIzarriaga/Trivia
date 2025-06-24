@@ -18,7 +18,7 @@ export default function Juego() {
         const code = url.searchParams.get("code") ?? "";
         const playerName = url.searchParams.get("name") ?? "";
         const salaId = url.searchParams.get("salaId") ?? "";
-        
+
         setUrlParams({ code, name: playerName, salaId });
 
         // Si no hay parámetros válidos, redirigir al home
@@ -178,9 +178,9 @@ export default function Juego() {
                         {juego.preguntaActual.respuestas.map((respuesta) => {
                             const isSelected = juego.respuestaSeleccionada === respuesta.id;
                             const isDisabled = juego.esperandoRespuesta || juego.mostrarResultado;
-                            
+
                             let buttonClass = "w-full p-4 text-left rounded-lg border-2 transition-all duration-200 ";
-                            
+
                             if (isDisabled) {
                                 if (isSelected && juego.mostrarResultado) {
                                     buttonClass += juego.esRespuestaCorrecta
@@ -213,11 +213,10 @@ export default function Juego() {
 
                     {/* Result Message */}
                     {juego.mostrarResultado && (
-                        <div className={`mt-6 p-4 rounded-lg text-center ${
-                            juego.esRespuestaCorrecta
+                        <div className={`mt-6 p-4 rounded-lg text-center ${juego.esRespuestaCorrecta
                                 ? "bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-200"
                                 : "bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-200"
-                        }`}>
+                            }`}>
                             <p className="font-semibold">
                                 {juego.esRespuestaCorrecta ? "¡Correcto! 🎉" : "Incorrecto 😔"}
                             </p>
