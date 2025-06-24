@@ -126,6 +126,43 @@ public class JuegoController : ControllerBase
 
         return Ok(new { mensaje = resultado.Message });
     }
+
+    [HttpGet("estado/{salaId}")]
+    public async Task<IActionResult> ObtenerEstadoJuego(int salaId)
+    {
+        var estado = await _juegoService.ObtenerEstadoJuegoAsync(salaId);
+
+        if (estado == null)
+        {
+            return NotFound(new { mensaje = "No se encontró el juego para esta sala." });
+        }
+
+        return Ok(new
+        {
+            juegoIniciado = estado.JuegoIniciado,
+            juegoTerminado = estado.JuegoTerminado,
+            preguntaActual = estado.PreguntaActualIndex + 1,
+            totalPreguntas = estado.TotalPreguntas,
+            puntuaciones = estado.JugadoresPuntuacion
+        });
+    }
+
+    [HttpGet("resultados/{salaId}")]
+    public async Task<IActionResult> ObtenerResultados(int salaId)
+    {
+        var resultados = await _juegoService.ObtenerResultadosAsync(salaId);
+
+        if (resultados == null)
+        {
+            return NotFound(new { mensaje = "No se encontraron resultados para esta sala." });
+        }
+
+        return Ok(new
+        {
+            ganador = resultados.Ganador,
+            puntuacionesFinal = resultados.PuntuacionesFinal.OrderByDescending(p => p.Value)
+        });
+    }
 }
 
 public class ResponderRequest

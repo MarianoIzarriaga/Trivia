@@ -1,5 +1,17 @@
+import ky from 'ky';
+
 // Configuración de la API
-const API_BASE_URL = `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api`;
+const API_BASE_URL = `${import.meta.env.VITE_API_URL ?? 'http://localhost:5000'}/api`;
+
+// Crear instancia de ky con configuración base
+const api = ky.create({
+    prefixUrl: API_BASE_URL,
+    timeout: 10000,
+    retry: {
+        limit: 2,
+        methods: ['get', 'post'],
+    },
+});
 
 // Tipos TypeScript para el juego
 export interface Pregunta {
@@ -34,6 +46,19 @@ export interface JuegoResponse {
 export interface ResponderResponse {
     mensaje: string;
     esCorrecta: boolean;
+}
+
+export interface EstadoJuegoResponse {
+    juegoIniciado: boolean;
+    juegoTerminado: boolean;
+    preguntaActual: number;
+    totalPreguntas: number;
+    puntuaciones: Record<string, number>;
+}
+
+export interface ResultadosResponse {
+    ganador: string;
+    puntuacionesFinal: Record<string, number>;
 }
 
 // Servicio de API para el Juego
@@ -96,5 +121,13 @@ export class JuegoApiService {
         return this.request<{ mensaje: string }>(`/Juego/finalizar/${salaId}`, {
             method: 'POST',
         });
+    }
+
+    static async obtenerEstadoJuego(salaId: number): Promise<EstadoJuegoResponse> {
+        return this.request<EstadoJuegoResponse>(`/Juego/estado/${salaId}`);
+    }
+
+    static async obtenerResultados(salaId: number): Promise<ResultadosResponse> {
+        return this.request<ResultadosResponse>(`/Juego/resultados/${salaId}`);
     }
 }

@@ -96,7 +96,11 @@ export function useJuego(): UseJuegoReturn {
 
             // Mostrar resultado por 3 segundos antes de continuar
             setTimeout(() => {
-                siguientePregunta();
+                if (juego.indicePregunta < juego.totalPreguntas) {
+                    siguientePregunta();
+                } else {
+                    finalizarJuego();
+                }
             }, 3000);
 
         } catch (error) {
