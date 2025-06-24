@@ -7,8 +7,7 @@ builder.Services.AddControllersWithViews();
 
 // Configurar Entity Framework
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection") 
-        ?? "Server=localhost,1433;Database=TriviaDB;User Id=sa;Password=TriviaPassword123!;TrustServerCertificate=True"));
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 var app = builder.Build();
 
