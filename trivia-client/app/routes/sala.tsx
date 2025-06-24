@@ -32,7 +32,7 @@ export default function Sala() {
     const handleStartGame = async () => {
         if (sala.esHost && sala.jugadores.length >= 2) {
             setGameStarting(true);
-            
+
             try {
                 // Iniciar el juego en el backend
                 const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/Juego/iniciar/${sala.id}`, {
@@ -113,9 +113,9 @@ export default function Sala() {
         return (
             <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
                 <div className="text-center">
-                    <img 
-                        src="/images/logo-trivia.png" 
-                        alt="Trivia Logo" 
+                    <img
+                        src="/images/logo-trivia.png"
+                        alt="Trivia Logo"
                         className="mx-auto h-20 w-auto mb-8"
                     />
                     <div className="text-6xl font-bold text-blue-600 dark:text-blue-400 mb-4">
@@ -137,9 +137,9 @@ export default function Sala() {
             {/* Header con Logo */}
             <div className="container mx-auto px-4 max-w-4xl mb-8">
                 <div className="text-center">
-                    <img 
-                        src="/images/logo-trivia.png" 
-                        alt="Trivia Logo" 
+                    <img
+                        src="/images/logo-trivia.png"
+                        alt="Trivia Logo"
                         className="mx-auto h-16 w-auto mb-4"
                     />
                     <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">
@@ -211,8 +211,8 @@ export default function Sala() {
                                 <div
                                     key={index}
                                     className={`flex items-center p-3 rounded-lg ${player === sala.nombreJugador
-                                            ? "bg-blue-50 border-2 border-blue-200 dark:bg-blue-900/20 dark:border-blue-700"
-                                            : "bg-gray-50 dark:bg-gray-700"
+                                        ? "bg-blue-50 border-2 border-blue-200 dark:bg-blue-900/20 dark:border-blue-700"
+                                        : "bg-gray-50 dark:bg-gray-700"
                                         }`}
                                 >
                                     <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold mr-3">
@@ -237,8 +237,8 @@ export default function Sala() {
                                     onClick={handleStartGame}
                                     disabled={sala.jugadores.length < 2}
                                     className={`w-full py-3 px-4 rounded-lg font-medium transition-colors ${sala.jugadores.length >= 2
-                                            ? "bg-green-600 hover:bg-green-700 text-white"
-                                            : "bg-gray-300 dark:bg-gray-600 text-gray-500 cursor-not-allowed"
+                                        ? "bg-green-600 hover:bg-green-700 text-white"
+                                        : "bg-gray-300 dark:bg-gray-600 text-gray-500 cursor-not-allowed"
                                         }`}
                                 >
                                     {sala.jugadores.length < 2

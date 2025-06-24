@@ -78,10 +78,10 @@ export default function JuegoSync() {
     const cargarPreguntaActual = async (salaId: number) => {
         try {
             setGameState(prev => ({ ...prev, cargando: true, error: null }));
-            
+
             const pregunta = await JuegoApiService.obtenerPreguntaActual(salaId);
             const estado = await JuegoApiService.obtenerEstadoJuego(salaId);
-            
+
             setGameState(prev => ({
                 ...prev,
                 preguntaActual: pregunta,
@@ -161,7 +161,7 @@ export default function JuegoSync() {
 
         try {
             const response = await JuegoApiService.siguientePregunta(gameState.salaId);
-            
+
             setGameState(prev => ({
                 ...prev,
                 preguntaActual: response.pregunta ? {
@@ -186,9 +186,9 @@ export default function JuegoSync() {
         return (
             <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 to-blue-100 dark:from-gray-900 dark:to-gray-800">
                 <div className="text-center">
-                    <img 
-                        src="/images/logo-trivia.png" 
-                        alt="Trivia Logo" 
+                    <img
+                        src="/images/logo-trivia.png"
+                        alt="Trivia Logo"
                         className="mx-auto h-16 w-auto mb-8"
                     />
                     <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-purple-600 mx-auto mb-4"></div>
@@ -200,16 +200,16 @@ export default function JuegoSync() {
 
     if (gameState.juegoTerminado) {
         const puntuacionesOrdenadas = Object.entries(gameState.puntuaciones)
-            .sort(([,a], [,b]) => b - a);
+            .sort(([, a], [, b]) => b - a);
 
         return (
             <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-100 dark:from-gray-900 dark:to-gray-800 py-8">
                 <div className="container mx-auto px-4 max-w-4xl">
                     {/* Header con Logo */}
                     <div className="text-center mb-8">
-                        <img 
-                            src="/images/logo-trivia.png" 
-                            alt="Trivia Logo" 
+                        <img
+                            src="/images/logo-trivia.png"
+                            alt="Trivia Logo"
                             className="mx-auto h-16 w-auto mb-4"
                         />
                         <h1 className="text-4xl font-bold text-gray-900 dark:text-gray-100 mb-2">
@@ -240,11 +240,10 @@ export default function JuegoSync() {
                             {puntuacionesOrdenadas.map(([nombre, puntos], index) => (
                                 <div
                                     key={nombre}
-                                    className={`flex items-center justify-between p-3 rounded-lg ${
-                                        nombre === gameState.nombreJugador
+                                    className={`flex items-center justify-between p-3 rounded-lg ${nombre === gameState.nombreJugador
                                             ? "bg-blue-50 border-2 border-blue-200 dark:bg-blue-900/20 dark:border-blue-700"
                                             : "bg-gray-50 dark:bg-gray-700"
-                                    }`}
+                                        }`}
                                 >
                                     <div className="flex items-center">
                                         <span className="text-2xl mr-3">
@@ -303,9 +302,9 @@ export default function JuegoSync() {
             <div className="container mx-auto px-4 max-w-4xl">
                 {/* Header con Logo */}
                 <div className="text-center mb-8">
-                    <img 
-                        src="/images/logo-trivia.png" 
-                        alt="Trivia Logo" 
+                    <img
+                        src="/images/logo-trivia.png"
+                        alt="Trivia Logo"
                         className="mx-auto h-12 w-auto mb-4"
                     />
                     <div className="flex justify-between items-center">
@@ -329,16 +328,16 @@ export default function JuegoSync() {
                         {gameState.preguntaActual.respuestas.map((respuesta, index) => {
                             const isSelected = gameState.respuestaSeleccionada === respuesta.id;
                             const isDisabled = gameState.respuestaSeleccionada !== null;
-                            
+
                             let buttonClass = "w-full p-4 text-left rounded-lg border-2 transition-all duration-200 ";
-                            
+
                             if (isDisabled) {
                                 if (isSelected) {
                                     buttonClass += gameState.mostrandoResultado && gameState.esRespuestaCorrecta
                                         ? "bg-green-100 border-green-500 text-green-800 dark:bg-green-900/20 dark:border-green-600 dark:text-green-400"
                                         : gameState.mostrandoResultado
-                                        ? "bg-red-100 border-red-500 text-red-800 dark:bg-red-900/20 dark:border-red-600 dark:text-red-400"
-                                        : "bg-blue-100 border-blue-500 text-blue-800 dark:bg-blue-900/20 dark:border-blue-600 dark:text-blue-400";
+                                            ? "bg-red-100 border-red-500 text-red-800 dark:bg-red-900/20 dark:border-red-600 dark:text-red-400"
+                                            : "bg-blue-100 border-blue-500 text-blue-800 dark:bg-blue-900/20 dark:border-blue-600 dark:text-blue-400";
                                 } else {
                                     buttonClass += "bg-gray-100 border-gray-300 text-gray-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-400 cursor-not-allowed";
                                 }
@@ -367,16 +366,15 @@ export default function JuegoSync() {
                     {/* Mensaje de resultado */}
                     {gameState.mostrandoResultado && (
                         <div className="mt-6 text-center">
-                            <div className={`text-2xl font-bold ${
-                                gameState.esRespuestaCorrecta 
-                                    ? "text-green-600 dark:text-green-400" 
+                            <div className={`text-2xl font-bold ${gameState.esRespuestaCorrecta
+                                    ? "text-green-600 dark:text-green-400"
                                     : "text-red-600 dark:text-red-400"
-                            }`}>
+                                }`}>
                                 {gameState.esRespuestaCorrecta ? "¡Correcto! 🎉" : "Incorrecto 😢"}
                             </div>
                             <p className="text-gray-600 dark:text-gray-400 mt-2">
-                                {gameState.preguntaNumero < gameState.totalPreguntas 
-                                    ? "Siguiente pregunta en unos segundos..." 
+                                {gameState.preguntaNumero < gameState.totalPreguntas
+                                    ? "Siguiente pregunta en unos segundos..."
                                     : "Calculando resultados finales..."}
                             </p>
                         </div>
@@ -390,15 +388,14 @@ export default function JuegoSync() {
                     </h3>
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                         {Object.entries(gameState.puntuaciones)
-                            .sort(([,a], [,b]) => b - a)
+                            .sort(([, a], [, b]) => b - a)
                             .map(([nombre, puntos]) => (
                                 <div
                                     key={nombre}
-                                    className={`p-3 rounded-lg text-center ${
-                                        nombre === gameState.nombreJugador
+                                    className={`p-3 rounded-lg text-center ${nombre === gameState.nombreJugador
                                             ? "bg-blue-50 border border-blue-200 dark:bg-blue-900/20 dark:border-blue-700"
                                             : "bg-gray-50 dark:bg-gray-700"
-                                    }`}
+                                        }`}
                                 >
                                     <div className="font-medium text-gray-900 dark:text-gray-100 truncate">
                                         {nombre}
