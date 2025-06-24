@@ -27,6 +27,16 @@ export default function Sala() {
         }
     }, [sala.conectado, sala.cargando]);
 
+    // Efecto para manejar la redirección cuando termine la cuenta regresiva
+    useEffect(() => {
+        if (sala.countdown?.isActive === false && sala.countdown?.value === 0) {
+            // Redirigir al juego después de que termine la cuenta regresiva
+            setTimeout(() => {
+                window.location.href = `/juego?code=${sala.codigo}&name=${encodeURIComponent(sala.nombreJugador)}&salaId=${sala.id}`;
+            }, 1000); // Esperar 1 segundo para que el usuario vea que llegó a 0
+        }
+    }, [sala.countdown, sala.codigo, sala.nombreJugador, sala.id]);
+
     const handleStartGame = async () => {
         if (sala.esHost && sala.jugadores.length >= 2) {
             try {

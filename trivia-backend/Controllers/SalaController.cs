@@ -9,15 +9,17 @@ using System.Collections.Concurrent;
 
 namespace trivia_backend.Controllers;
 
-[Route("[controller]/[action]")]
+[Route("[controller]")]
 public class SalaController : Controller
 {
     private readonly ISalaService _salaService;
+    private readonly IJuegoService _juegoService;
     private static readonly ConcurrentDictionary<string, GameCountdownState> _countdownStates = new();
 
-    public SalaController(ISalaService salaService)
+    public SalaController(ISalaService salaService, IJuegoService juegoService)
     {
         _salaService = salaService;
+        _juegoService = juegoService;
     }
 
 
@@ -28,7 +30,7 @@ public class SalaController : Controller
     
     */
 
-    [HttpPost]
+    [HttpPost("CrearSala")]
     public async Task<IActionResult> CrearSala(string nombreJugador)
     {
         var resultado = await _salaService.CrearSalaAsync(nombreJugador);
@@ -48,7 +50,7 @@ public class SalaController : Controller
     }
 
 
-    [HttpPost]
+    [HttpPost("UnirseSala")]
     public async Task<IActionResult> UnirseSala(string codigoSala, string nombreJugador)
     {
         var resultado = await _salaService.UnirseSalaAsync(codigoSala, nombreJugador);
@@ -67,7 +69,7 @@ public class SalaController : Controller
         });
     }
 
-    [HttpPost]
+    [HttpPost("SalirDeSala")]
     public async Task<IActionResult> SalirDeSala(string nombreJugador, int salaId)
     {
         if (!ModelState.IsValid)
@@ -85,7 +87,7 @@ public class SalaController : Controller
         return Ok(new { mensaje = resultado.Message });
     }
 
-    [HttpGet]
+    [HttpGet("ObtenerSalasDisponibles")]
     public async Task<IActionResult> ObtenerSalasDisponibles()
     {
         var salas = await _salaService.ObtenerSalasDisponiblesAsync();
@@ -103,7 +105,7 @@ public class SalaController : Controller
         return Ok(salasInfo);
     }
 
-    [HttpGet]
+    [HttpGet("ObtenerSalaPorCodigo")]
     public async Task<IActionResult> ObtenerSalaPorCodigo(string codigo)
     {
         var sala = await _salaService.ObtenerSalaPorCodigoAsync(codigo);
@@ -128,7 +130,7 @@ public class SalaController : Controller
     public async Task<IActionResult> IniciarCuentaRegresiva(string codigo)
     {
         var sala = await _salaService.ObtenerSalaPorCodigoAsync(codigo);
-        
+
         if (sala == null)
         {
             return NotFound(new { mensaje = "Sala no encontrada" });
@@ -152,12 +154,12 @@ public class SalaController : Controller
         _countdownStates[codigo] = countdownState;
 
         // Iniciar tarea en segundo plano para manejar la cuenta regresiva
-        _ = Task.Run(async () => await HandleCountdown(codigo));
+        _ = Task.Run(async () => await HandleCountdown(codigo, countdownState.SalaId));
 
         return Ok(new { mensaje = "Cuenta regresiva iniciada" });
     }
 
-    private static async Task HandleCountdown(string codigo)
+    private async Task HandleCountdown(string codigo, int salaId)
     {
         if (!_countdownStates.TryGetValue(codigo, out var state))
             return;
@@ -168,7 +170,7 @@ public class SalaController : Controller
             {
                 state.CountdownValue = i;
                 await Task.Delay(1000);
-                
+
                 if (!state.IsActive)
                     break;
             }
@@ -177,6 +179,9 @@ public class SalaController : Controller
             {
                 state.CountdownValue = 0;
                 state.IsActive = false;
+
+                // Iniciar el juego automáticamente
+                await _juegoService.IniciarJuegoAsync(salaId);
             }
         }
         finally
@@ -185,7 +190,7 @@ public class SalaController : Controller
         }
     }
 
-    [HttpGet]
+    [HttpGet("SalaEvents")]
     public async Task SalaEvents(string codigo)
     {
         Response.Headers["Content-Type"] = "text/event-stream";
