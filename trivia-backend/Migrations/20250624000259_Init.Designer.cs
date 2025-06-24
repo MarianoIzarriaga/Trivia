@@ -11,8 +11,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace trivia_backend.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20250623234028_UsuarioConEdad")]
-    partial class UsuarioConEdad
+    [Migration("20250624000259_Init")]
+    partial class Init
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -23,6 +23,28 @@ namespace trivia_backend.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
+
+            modelBuilder.Entity("trivia_backend.Models.Jugador", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Nombre")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("SalaId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SalaId");
+
+                    b.ToTable("Usuarios");
+                });
 
             modelBuilder.Entity("trivia_backend.Models.Pregunta", b =>
                 {
@@ -77,10 +99,6 @@ namespace trivia_backend.Migrations
                     b.Property<int>("Capacidad")
                         .HasColumnType("int");
 
-                    b.Property<string>("Creador")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<string>("Descripcion")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -97,28 +115,11 @@ namespace trivia_backend.Migrations
                     b.ToTable("Salas");
                 });
 
-            modelBuilder.Entity("trivia_backend.Models.Usuario", b =>
+            modelBuilder.Entity("trivia_backend.Models.Jugador", b =>
                 {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("Edad")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Email")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Nombre")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Usuarios");
+                    b.HasOne("trivia_backend.Models.Sala", null)
+                        .WithMany("Jugadores")
+                        .HasForeignKey("SalaId");
                 });
 
             modelBuilder.Entity("trivia_backend.Models.Respuesta", b =>
@@ -131,6 +132,11 @@ namespace trivia_backend.Migrations
             modelBuilder.Entity("trivia_backend.Models.Pregunta", b =>
                 {
                     b.Navigation("Respuestas");
+                });
+
+            modelBuilder.Entity("trivia_backend.Models.Sala", b =>
+                {
+                    b.Navigation("Jugadores");
                 });
 #pragma warning restore 612, 618
         }

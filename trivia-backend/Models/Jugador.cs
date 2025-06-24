@@ -1,13 +1,8 @@
 namespace trivia_backend.Models;
 
 
-public class Usuario
+public class Jugador
 {
     public int Id { get; set; }
     public string Nombre { get; set; }
-    public string Email { get; set; }
-    
-
-    public int Edad { get; set; }
-
 }
