@@ -128,7 +128,16 @@ export class SalaApiService {
             }>>();
         } catch (error: any) {
             const errorData = await error.response?.json?.() ?? {};
-            throw new Error(errorData.mensaje || errorData.Message || 'Error al obtener salas');
+            throw new Error(errorData.mensaje ?? errorData.Message ?? 'Error al obtener salas');
+        }
+    }
+
+    static async iniciarCuentaRegresiva(codigo: string): Promise<{ mensaje: string }> {
+        try {
+            return await api.post(`Sala/iniciar-cuenta-regresiva/${codigo}`).json<{ mensaje: string }>();
+        } catch (error: any) {
+            const errorData = await error.response?.json?.() ?? {};
+            throw new Error(errorData.mensaje ?? errorData.Message ?? 'Error al iniciar cuenta regresiva');
         }
     }
 

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { useSala } from "../hooks/useSala";
 
 export function meta() {
@@ -9,9 +9,7 @@ export function meta() {
 }
 
 export default function Sala() {
-    const { sala, salirDeSala, limpiarError } = useSala();
-    const [gameStarting, setGameStarting] = useState(false);
-    const [countdown, setCountdown] = useState(5);
+    const { sala, salirDeSala, iniciarCuentaRegresiva, limpiarError } = useSala();
 
     useEffect(() => {
         // Verificar que estamos conectados a una sala
@@ -31,37 +29,11 @@ export default function Sala() {
 
     const handleStartGame = async () => {
         if (sala.esHost && sala.jugadores.length >= 2) {
-            setGameStarting(true);
-
             try {
-                // Iniciar el juego en el backend
-                const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/Juego/iniciar/${sala.id}`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    }
-                });
-
-                if (!response.ok) {
-                    throw new Error('Error al iniciar el juego');
-                }
-
-                // Countdown antes de redirigir
-                const countdownInterval = setInterval(() => {
-                    setCountdown(prev => {
-                        if (prev <= 1) {
-                            clearInterval(countdownInterval);
-                            // Redirigir al juego sincronizado con el ID de la sala
-                            window.location.href = `/juego-sync?code=${sala.codigo}&name=${encodeURIComponent(sala.nombreJugador)}&salaId=${sala.id}`;
-                            return 0;
-                        }
-                        return prev - 1;
-                    });
-                }, 1000);
+                // Iniciar cuenta regresiva sincronizada
+                await iniciarCuentaRegresiva();
             } catch (error) {
-                console.error('Error al iniciar el juego:', error);
-                setGameStarting(false);
-                setCountdown(5);
+                console.error('Error al iniciar cuenta regresiva:', error);
                 // Aquí podrías mostrar un mensaje de error al usuario
             }
         }
@@ -96,7 +68,7 @@ export default function Sala() {
                 <div className="text-center">
                     <h1 className="text-2xl font-bold text-red-600 mb-4">Error de Conexión</h1>
                     <p className="text-gray-600 dark:text-gray-400 mb-4">
-                        {sala.error || "No se pudo conectar a la sala"}
+                        {sala.error ?? "No se pudo conectar a la sala"}
                     </p>
                     <button
                         onClick={() => window.location.href = "/"}
@@ -109,7 +81,8 @@ export default function Sala() {
         );
     }
 
-    if (gameStarting) {
+    // Mostrar cuenta regresiva si está activa
+    if (sala.countdown?.isActive) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
                 <div className="text-center">
@@ -119,7 +92,7 @@ export default function Sala() {
                         className="mx-auto h-20 w-auto mb-8"
                     />
                     <div className="text-6xl font-bold text-blue-600 dark:text-blue-400 mb-4">
-                        {countdown}
+                        {sala.countdown.value}
                     </div>
                     <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
                         ¡El juego comienza en...!
@@ -207,9 +180,9 @@ export default function Sala() {
                         </h2>
 
                         <div className="space-y-3 mb-6">
-                            {sala.jugadores.map((player, index) => (
+                            {sala.jugadores.map((player) => (
                                 <div
-                                    key={index}
+                                    key={player}
                                     className={`flex items-center p-3 rounded-lg ${player === sala.nombreJugador
                                         ? "bg-blue-50 border-2 border-blue-200 dark:bg-blue-900/20 dark:border-blue-700"
                                         : "bg-gray-50 dark:bg-gray-700"
