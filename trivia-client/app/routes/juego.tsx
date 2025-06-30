@@ -226,6 +226,20 @@ export default function JuegoSync() {
     }
 
     if (gameState.juegoTerminado) {
+        let ganadorNombre = gameState.ganador;
+        let ganadorPuntos = gameState.puntuaciones[ganadorNombre];
+        if (ganadorNombre === "Nadie" || ganadorNombre === "" || ganadorPuntos === undefined) {
+            // Buscar el jugador con más puntos
+            const max = Object.entries(gameState.puntuaciones).sort(([, a], [, b]) => b - a)[0];
+            if (max) {
+                ganadorNombre = max[0];
+                ganadorPuntos = max[1];
+            } else {
+                ganadorNombre = "Sin ganador";
+                ganadorPuntos = 0;
+            }
+        }
+
         const puntuacionesOrdenadas = Object.entries(gameState.puntuaciones)
             .sort(([, a], [, b]) => b - a);
 
@@ -251,10 +265,10 @@ export default function JuegoSync() {
                             Ganador
                         </h2>
                         <p className="text-2xl font-semibold text-gray-900 dark:text-gray-100">
-                            {gameState.ganador}
+                            {ganadorNombre}
                         </p>
                         <p className="text-lg text-gray-600 dark:text-gray-400">
-                            {gameState.puntuaciones[gameState.ganador]} puntos
+                            {typeof ganadorPuntos === "number" ? `${ganadorPuntos} puntos` : "0 puntos"}
                         </p>
                     </div>
 
@@ -284,7 +298,7 @@ export default function JuegoSync() {
                                         </span>
                                     </div>
                                     <span className="text-lg font-bold text-gray-900 dark:text-gray-100">
-                                        {puntos} pts
+                                        {typeof puntos === "number" ? `${puntos} pts` : "0 pts"}
                                     </span>
                                 </div>
                             ))}
