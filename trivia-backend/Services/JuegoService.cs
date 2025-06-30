@@ -196,7 +196,7 @@ public class JuegoService : IJuegoService
             return Task.FromResult<ResultadosDto?>(null);
         }
 
-        if (!estadoJuego.JuegoTerminado)
+        if (!estadoJuego.JuegoTerminado || estadoJuego.PreguntaActualIndex == 9)
             return Task.FromResult<ResultadosDto?>(null);
 
         var ganador = estadoJuego.JugadoresPuntuacion

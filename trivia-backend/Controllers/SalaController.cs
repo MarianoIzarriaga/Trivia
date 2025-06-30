@@ -162,13 +162,14 @@ public class SalaController : Controller
     private async Task HandleCountdown(string codigo, int salaId)
     {
 
+        await _juegoService.IniciarJuegoAsync(salaId);
 
         if (!_countdownStates.TryGetValue(codigo, out var state))
             return;
 
         try
         {
-            for (int i = 5; i > 0; i--)
+            for (int i = 2; i > 0; i--)
             {
                 state.CountdownValue = i;
                 await Task.Delay(1000);
