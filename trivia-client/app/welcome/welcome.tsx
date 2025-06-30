@@ -1,6 +1,4 @@
 import { useState, useEffect } from "react";
-import logoDark from "./logo-dark.svg";
-import logoLight from "./logo-light.svg";
 import { useSala } from "../hooks/useSala";
 
 export function Welcome() {
@@ -61,14 +59,9 @@ export function Welcome() {
           <header className="flex flex-col items-center gap-9">
             <div className="w-[300px] max-w-[100vw] p-4">
               <img
-                src={logoLight}
+                src="/images/logo-trivia.png"
                 alt="Trivia Game"
-                className="block w-full dark:hidden"
-              />
-              <img
-                src={logoDark}
-                alt="Trivia Game"
-                className="hidden w-full dark:block"
+                className="block w-full"
               />
             </div>
           </header>
@@ -145,14 +138,9 @@ export function Welcome() {
         <header className="flex flex-col items-center gap-9">
           <div className="w-[500px] max-w-[100vw] p-4">
             <img
-              src={logoLight}
+              src="/images/logo-trivia.png"
               alt="Trivia Game"
-              className="block w-full dark:hidden"
-            />
-            <img
-              src={logoDark}
-              alt="Trivia Game"
-              className="hidden w-full dark:block"
+              className="block w-full"
             />
           </div>
         </header>

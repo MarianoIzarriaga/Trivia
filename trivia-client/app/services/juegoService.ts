@@ -1,5 +1,17 @@
+import ky from 'ky';
+
 // Configuración de la API
-const API_BASE_URL = `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api`;
+const API_BASE_URL = `${import.meta.env.VITE_API_URL ?? 'http://localhost:5000'}/api`;
+
+// Crear instancia de ky con configuración base
+const api = ky.create({
+    prefixUrl: API_BASE_URL,
+    timeout: 10000,
+    retry: {
+        limit: 2,
+        methods: ['get', 'post'],
+    },
+});
 
 // Tipos TypeScript para el juego
 export interface Pregunta {
@@ -36,65 +48,83 @@ export interface ResponderResponse {
     esCorrecta: boolean;
 }
 
-// Servicio de API para el Juego
+export interface EstadoJuegoResponse {
+    juegoIniciado: boolean;
+    juegoTerminado: boolean;
+    preguntaActual: number;
+    totalPreguntas: number;
+    puntuaciones: Record<string, number>;
+}
+
+export interface ResultadosResponse {
+    ganador: string;
+    puntuacionesFinal: Record<string, number>;
+}
+
+// Servicio de API para el Juego usando ky
 export class JuegoApiService {
-    private static async request<T>(
-        endpoint: string,
-        options: RequestInit = {}
-    ): Promise<T> {
-        const url = `${API_BASE_URL}${endpoint}`;
-
-        const config: RequestInit = {
-            headers: {
-                'Content-Type': 'application/json',
-                ...options.headers,
-            },
-            ...options,
-        };
-
+    static async iniciarJuego(salaId: number): Promise<JuegoResponse> {
         try {
-            const response = await fetch(url, config);
-            const data = await response.json();
-
-            if (!response.ok) {
-                throw new Error(data.mensaje || data.Message || 'Error en la API');
-            }
-
-            return data;
-        } catch (error) {
-            if (error instanceof Error) {
-                throw error;
-            }
-            throw new Error('Error de conexión con el servidor');
+            return await api.post(`Juego/iniciar/${salaId}`).json<JuegoResponse>();
+        } catch (error: any) {
+            const errorData = await error.response?.json?.() ?? {};
+            throw new Error(errorData.mensaje ?? errorData.Message ?? 'Error al iniciar juego');
         }
     }
 
-    static async iniciarJuego(salaId: number): Promise<JuegoResponse> {
-        return this.request<JuegoResponse>(`/Juego/iniciar/${salaId}`, {
-            method: 'POST',
-        });
-    }
-
     static async responderPregunta(request: ResponderRequest): Promise<ResponderResponse> {
-        return this.request<ResponderResponse>('/Juego/responder', {
-            method: 'POST',
-            body: JSON.stringify(request),
-        });
+        try {
+            return await api.post('Juego/responder', {
+                json: request,
+            }).json<ResponderResponse>();
+        } catch (error: any) {
+            const errorData = await error.response?.json?.() ?? {};
+            throw new Error(errorData.mensaje ?? errorData.Message ?? 'Error al responder pregunta');
+        }
     }
 
     static async obtenerPreguntaActual(salaId: number): Promise<Pregunta> {
-        return this.request<Pregunta>(`/Juego/pregunta-actual/${salaId}`);
+        try {
+            return await api.get(`Juego/pregunta-actual/${salaId}`).json<Pregunta>();
+        } catch (error: any) {
+            const errorData = await error.response?.json?.() ?? {};
+            throw new Error(errorData.mensaje ?? errorData.Message ?? 'Error al obtener pregunta');
+        }
     }
 
     static async siguientePregunta(salaId: number): Promise<JuegoResponse> {
-        return this.request<JuegoResponse>(`/Juego/siguiente-pregunta/${salaId}`, {
-            method: 'POST',
-        });
+        try {
+            return await api.post(`Juego/siguiente-pregunta/${salaId}`).json<JuegoResponse>();
+        } catch (error: any) {
+            const errorData = await error.response?.json?.() ?? {};
+            throw new Error(errorData.mensaje ?? errorData.Message ?? 'Error al obtener siguiente pregunta');
+        }
     }
 
     static async finalizarJuego(salaId: number): Promise<{ mensaje: string }> {
-        return this.request<{ mensaje: string }>(`/Juego/finalizar/${salaId}`, {
-            method: 'POST',
-        });
+        try {
+            return await api.post(`Juego/finalizar/${salaId}`).json<{ mensaje: string }>();
+        } catch (error: any) {
+            const errorData = await error.response?.json?.() ?? {};
+            throw new Error(errorData.mensaje ?? errorData.Message ?? 'Error al finalizar juego');
+        }
+    }
+
+    static async obtenerEstadoJuego(salaId: number): Promise<EstadoJuegoResponse> {
+        try {
+            return await api.get(`Juego/estado/${salaId}`).json<EstadoJuegoResponse>();
+        } catch (error: any) {
+            const errorData = await error.response?.json?.() ?? {};
+            throw new Error(errorData.mensaje ?? errorData.Message ?? 'Error al obtener estado del juego');
+        }
+    }
+
+    static async obtenerResultados(salaId: number): Promise<ResultadosResponse> {
+        try {
+            return await api.get(`Juego/resultados/${salaId}`).json<ResultadosResponse>();
+        } catch (error: any) {
+            const errorData = await error.response?.json?.() ?? {};
+            throw new Error(errorData.mensaje ?? errorData.Message ?? 'Error al obtener resultados');
+        }
     }
 }

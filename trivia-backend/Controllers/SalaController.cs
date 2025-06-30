@@ -5,16 +5,21 @@ using trivia_backend.Models;
 using trivia_backend.Services;
 using System.Text;
 using System.Text.Json;
+using System.Collections.Concurrent;
 
 namespace trivia_backend.Controllers;
 
+[Route("[controller]")]
 public class SalaController : Controller
 {
     private readonly ISalaService _salaService;
+    private readonly IJuegoService _juegoService;
+    private static readonly ConcurrentDictionary<string, GameCountdownState> _countdownStates = new();
 
-    public SalaController(ISalaService salaService)
+    public SalaController(ISalaService salaService, IJuegoService juegoService)
     {
         _salaService = salaService;
+        _juegoService = juegoService;
     }
 
 
@@ -25,7 +30,7 @@ public class SalaController : Controller
     
     */
 
-    [HttpPost]
+    [HttpPost("CrearSala")]
     public async Task<IActionResult> CrearSala(string nombreJugador)
     {
         var resultado = await _salaService.CrearSalaAsync(nombreJugador);
@@ -45,7 +50,7 @@ public class SalaController : Controller
     }
 
 
-    [HttpPost]
+    [HttpPost("UnirseSala")]
     public async Task<IActionResult> UnirseSala(string codigoSala, string nombreJugador)
     {
         var resultado = await _salaService.UnirseSalaAsync(codigoSala, nombreJugador);
@@ -64,9 +69,14 @@ public class SalaController : Controller
         });
     }
 
-    [HttpPost]
+    [HttpPost("SalirDeSala")]
     public async Task<IActionResult> SalirDeSala(string nombreJugador, int salaId)
     {
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(ModelState);
+        }
+
         var resultado = await _salaService.SalirDeSalaAsync(nombreJugador, salaId);
 
         if (!resultado.Success)
@@ -77,7 +87,7 @@ public class SalaController : Controller
         return Ok(new { mensaje = resultado.Message });
     }
 
-    [HttpGet]
+    [HttpGet("ObtenerSalasDisponibles")]
     public async Task<IActionResult> ObtenerSalasDisponibles()
     {
         var salas = await _salaService.ObtenerSalasDisponiblesAsync();
@@ -95,7 +105,7 @@ public class SalaController : Controller
         return Ok(salasInfo);
     }
 
-    [HttpGet]
+    [HttpGet("ObtenerSalaPorCodigo")]
     public async Task<IActionResult> ObtenerSalaPorCodigo(string codigo)
     {
         var sala = await _salaService.ObtenerSalaPorCodigoAsync(codigo);
@@ -116,7 +126,71 @@ public class SalaController : Controller
         });
     }
 
-    [HttpGet]
+    [HttpPost("iniciar-cuenta-regresiva/{codigo}")]
+    public async Task<IActionResult> IniciarCuentaRegresiva(string codigo)
+    {
+        var sala = await _salaService.ObtenerSalaPorCodigoAsync(codigo);
+
+        if (sala == null)
+        {
+            return NotFound(new { mensaje = "Sala no encontrada" });
+        }
+
+        if (sala.Jugadores.Count < 2)
+        {
+            return BadRequest(new { mensaje = "Se necesitan al menos 2 jugadores para iniciar el juego" });
+        }
+
+        // Iniciar cuenta regresiva
+        var countdownState = new GameCountdownState
+        {
+            SalaId = sala.Id,
+            Codigo = codigo,
+            CountdownValue = 5,
+            IsActive = true,
+            StartTime = DateTime.UtcNow
+        };
+
+        _countdownStates[codigo] = countdownState;
+
+        // Iniciar tarea en segundo plano para manejar la cuenta regresiva
+        _ = Task.Run(async () => await HandleCountdown(codigo, countdownState.SalaId));
+
+        return Ok(new { mensaje = "Cuenta regresiva iniciada" });
+    }
+
+    private async Task HandleCountdown(string codigo, int salaId)
+    {
+        if (!_countdownStates.TryGetValue(codigo, out var state))
+            return;
+
+        try
+        {
+            for (int i = 5; i > 0; i--)
+            {
+                state.CountdownValue = i;
+                await Task.Delay(1000);
+
+                if (!state.IsActive)
+                    break;
+            }
+
+            if (state.IsActive)
+            {
+                state.CountdownValue = 0;
+                state.IsActive = false;
+
+                // Iniciar el juego automáticamente
+                await _juegoService.IniciarJuegoAsync(salaId);
+            }
+        }
+        finally
+        {
+            _countdownStates.TryRemove(codigo, out _);
+        }
+    }
+
+    [HttpGet("SalaEvents")]
     public async Task SalaEvents(string codigo)
     {
         Response.Headers["Content-Type"] = "text/event-stream";
@@ -141,7 +215,14 @@ public class SalaController : Controller
                         jugadores = sala.Jugadores.Select(j => j.Nombre).ToList(),
                         capacidad = sala.Capacidad,
                         creador = sala.creador?.Nombre,
-                        timestamp = DateTime.UtcNow
+                        timestamp = DateTime.UtcNow,
+                        // Agregar información de cuenta regresiva
+                        countdown = _countdownStates.TryGetValue(codigo, out var countdownState) ? new
+                        {
+                            isActive = countdownState.IsActive,
+                            value = countdownState.CountdownValue,
+                            startTime = countdownState.StartTime
+                        } : null
                     };
 
                     var json = JsonSerializer.Serialize(salaData);
@@ -151,7 +232,7 @@ public class SalaController : Controller
                     await Response.Body.FlushAsync(cancellationToken);
                 }
 
-                await Task.Delay(2000, cancellationToken); // Enviar actualizaciones cada 2 segundos
+                await Task.Delay(500, cancellationToken); // Enviar actualizaciones cada 500ms para mejor sincronización
             }
         }
         catch (OperationCanceledException)
@@ -165,4 +246,14 @@ public class SalaController : Controller
         return View();
     }
 
+}
+
+// Clase para manejar el estado de la cuenta regresiva
+public class GameCountdownState
+{
+    public int SalaId { get; set; }
+    public string Codigo { get; set; } = string.Empty;
+    public int CountdownValue { get; set; }
+    public bool IsActive { get; set; }
+    public DateTime StartTime { get; set; }
 }

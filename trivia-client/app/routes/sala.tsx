@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { useSala } from "../hooks/useSala";
 
 export function meta() {
@@ -9,9 +9,7 @@ export function meta() {
 }
 
 export default function Sala() {
-    const { sala, salirDeSala, limpiarError } = useSala();
-    const [gameStarting, setGameStarting] = useState(false);
-    const [countdown, setCountdown] = useState(5);
+    const { sala, salirDeSala, iniciarCuentaRegresiva, limpiarError } = useSala();
 
     useEffect(() => {
         // Verificar que estamos conectados a una sala
@@ -29,20 +27,25 @@ export default function Sala() {
         }
     }, [sala.conectado, sala.cargando]);
 
-    const handleStartGame = () => {
+    // Efecto para manejar la redirección cuando termine la cuenta regresiva
+    useEffect(() => {
+        if (sala.countdown?.isActive === false && sala.countdown?.value === 0) {
+            // Redirigir al juego después de que termine la cuenta regresiva
+            setTimeout(() => {
+                window.location.href = `/juego?code=${sala.codigo}&name=${encodeURIComponent(sala.nombreJugador)}&salaId=${sala.id}`;
+            }, 1000); // Esperar 1 segundo para que el usuario vea que llegó a 0
+        }
+    }, [sala.countdown, sala.codigo, sala.nombreJugador, sala.id]);
+
+    const handleStartGame = async () => {
         if (sala.esHost && sala.jugadores.length >= 2) {
-            setGameStarting(true);
-            const countdownInterval = setInterval(() => {
-                setCountdown(prev => {
-                    if (prev <= 1) {
-                        clearInterval(countdownInterval);
-                        // Redirigir al juego
-                        window.location.href = `/juego?code=${sala.codigo}&name=${encodeURIComponent(sala.nombreJugador)}`;
-                        return 0;
-                    }
-                    return prev - 1;
-                });
-            }, 1000);
+            try {
+                // Iniciar cuenta regresiva sincronizada
+                await iniciarCuentaRegresiva();
+            } catch (error) {
+                console.error('Error al iniciar cuenta regresiva:', error);
+                // Aquí podrías mostrar un mensaje de error al usuario
+            }
         }
     };
 
@@ -75,7 +78,7 @@ export default function Sala() {
                 <div className="text-center">
                     <h1 className="text-2xl font-bold text-red-600 mb-4">Error de Conexión</h1>
                     <p className="text-gray-600 dark:text-gray-400 mb-4">
-                        {sala.error || "No se pudo conectar a la sala"}
+                        {sala.error ?? "No se pudo conectar a la sala"}
                     </p>
                     <button
                         onClick={() => window.location.href = "/"}
@@ -88,12 +91,18 @@ export default function Sala() {
         );
     }
 
-    if (gameStarting) {
+    // Mostrar cuenta regresiva si está activa
+    if (sala.countdown?.isActive) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
                 <div className="text-center">
+                    <img
+                        src="/images/logo-trivia.png"
+                        alt="Trivia Logo"
+                        className="mx-auto h-20 w-auto mb-8"
+                    />
                     <div className="text-6xl font-bold text-blue-600 dark:text-blue-400 mb-4">
-                        {countdown}
+                        {sala.countdown.value}
                     </div>
                     <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
                         ¡El juego comienza en...!
@@ -108,6 +117,23 @@ export default function Sala() {
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 py-8">
+            {/* Header con Logo */}
+            <div className="container mx-auto px-4 max-w-4xl mb-8">
+                <div className="text-center">
+                    <img
+                        src="/images/logo-trivia.png"
+                        alt="Trivia Logo"
+                        className="mx-auto h-16 w-auto mb-4"
+                    />
+                    <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">
+                        Sala de Espera
+                    </h1>
+                    <p className="text-gray-600 dark:text-gray-400">
+                        Esperando que todos los jugadores se unan
+                    </p>
+                </div>
+            </div>
+
             <div className="container mx-auto px-4 max-w-4xl">
                 <div className="grid md:grid-cols-2 gap-8">
                     {/* Room Information */}
@@ -164,12 +190,12 @@ export default function Sala() {
                         </h2>
 
                         <div className="space-y-3 mb-6">
-                            {sala.jugadores.map((player, index) => (
+                            {sala.jugadores.map((player) => (
                                 <div
-                                    key={index}
+                                    key={player}
                                     className={`flex items-center p-3 rounded-lg ${player === sala.nombreJugador
-                                            ? "bg-blue-50 border-2 border-blue-200 dark:bg-blue-900/20 dark:border-blue-700"
-                                            : "bg-gray-50 dark:bg-gray-700"
+                                        ? "bg-blue-50 border-2 border-blue-200 dark:bg-blue-900/20 dark:border-blue-700"
+                                        : "bg-gray-50 dark:bg-gray-700"
                                         }`}
                                 >
                                     <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold mr-3">
@@ -194,8 +220,8 @@ export default function Sala() {
                                     onClick={handleStartGame}
                                     disabled={sala.jugadores.length < 2}
                                     className={`w-full py-3 px-4 rounded-lg font-medium transition-colors ${sala.jugadores.length >= 2
-                                            ? "bg-green-600 hover:bg-green-700 text-white"
-                                            : "bg-gray-300 dark:bg-gray-600 text-gray-500 cursor-not-allowed"
+                                        ? "bg-green-600 hover:bg-green-700 text-white"
+                                        : "bg-gray-300 dark:bg-gray-600 text-gray-500 cursor-not-allowed"
                                         }`}
                                 >
                                     {sala.jugadores.length < 2

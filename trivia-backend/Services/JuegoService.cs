@@ -176,6 +176,50 @@ public class JuegoService : IJuegoService
 
         return respuesta?.EsCorrecta ?? false;
     }
+
+    public Task<JuegoEstadoDto?> ObtenerEstadoJuegoAsync(int salaId)
+    {
+        if (!_juegosPorSala.TryGetValue(salaId, out var estadoJuego))
+        {
+            return Task.FromResult<JuegoEstadoDto?>(null);
+        }
+
+        var dto = new JuegoEstadoDto
+        {
+            JuegoIniciado = estadoJuego.JuegoIniciado,
+            JuegoTerminado = estadoJuego.JuegoTerminado,
+            PreguntaActualIndex = estadoJuego.PreguntaActualIndex,
+            TotalPreguntas = estadoJuego.Preguntas.Count,
+            JugadoresPuntuacion = estadoJuego.JugadoresPuntuacion
+        };
+
+        return Task.FromResult<JuegoEstadoDto?>(dto);
+    }
+
+    public Task<ResultadosDto?> ObtenerResultadosAsync(int salaId)
+    {
+        if (!_juegosPorSala.TryGetValue(salaId, out var estadoJuego))
+        {
+            return Task.FromResult<ResultadosDto?>(null);
+        }
+
+        if (!estadoJuego.JuegoTerminado)
+        {
+            return Task.FromResult<ResultadosDto?>(null);
+        }
+
+        var ganador = estadoJuego.JugadoresPuntuacion
+            .OrderByDescending(p => p.Value)
+            .FirstOrDefault();
+
+        var dto = new ResultadosDto
+        {
+            Ganador = ganador.Key ?? "Nadie",
+            PuntuacionesFinal = estadoJuego.JugadoresPuntuacion
+        };
+
+        return Task.FromResult<ResultadosDto?>(dto);
+    }
 }
 
 // Clase auxiliar para manejar el estado del juego

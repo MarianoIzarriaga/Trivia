@@ -1,5 +1,17 @@
+import ky from 'ky';
+
 // Configuración de la API
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
+// Crear instancia de ky con configuración base
+const api = ky.create({
+    prefixUrl: API_BASE_URL,
+    timeout: 10000,
+    retry: {
+        limit: 2,
+        methods: ['get', 'post'],
+    },
+});
 
 // Tipos TypeScript
 export interface Jugador {
@@ -40,48 +52,20 @@ export interface ApiError {
     mensaje: string;
 }
 
-// Servicio de API para Salas
+// Servicio de API para Salas usando ky
 export class SalaApiService {
-    private static async request<T>(
-        endpoint: string,
-        options: RequestInit = {}
-    ): Promise<T> {
-        const url = `${API_BASE_URL}${endpoint}`;
-
-        const config: RequestInit = {
-            headers: {
-                'Content-Type': 'application/json',
-                ...options.headers,
-            },
-            ...options,
-        };
-
-        try {
-            const response = await fetch(url, config);
-            const data = await response.json();
-
-            if (!response.ok) {
-                throw new Error(data.mensaje || data.Message || 'Error en la API');
-            }
-
-            return data;
-        } catch (error) {
-            if (error instanceof Error) {
-                throw error;
-            }
-            throw new Error('Error de conexión con el servidor');
-        }
-    }
-
     static async crearSala(nombreJugador: string): Promise<SalaResponse> {
         const formData = new FormData();
         formData.append('nombreJugador', nombreJugador);
 
-        return this.request<SalaResponse>('/Sala/CrearSala', {
-            method: 'POST',
-            body: formData,
-            headers: {}, // Remover Content-Type para FormData
-        });
+        try {
+            return await api.post('Sala/CrearSala', {
+                body: formData,
+            }).json<SalaResponse>();
+        } catch (error: any) {
+            const errorData = await error.response?.json?.() ?? {};
+            throw new Error(errorData.mensaje || errorData.Message || 'Error al crear sala');
+        }
     }
 
     static async unirseSala(codigoSala: string, nombreJugador: string): Promise<SalaResponse> {
@@ -89,11 +73,14 @@ export class SalaApiService {
         formData.append('codigoSala', codigoSala);
         formData.append('nombreJugador', nombreJugador);
 
-        return this.request<SalaResponse>('/Sala/UnirseSala', {
-            method: 'POST',
-            body: formData,
-            headers: {}, // Remover Content-Type para FormData
-        });
+        try {
+            return await api.post('Sala/UnirseSala', {
+                body: formData,
+            }).json<SalaResponse>();
+        } catch (error: any) {
+            const errorData = await error.response?.json?.() ?? {};
+            throw new Error(errorData.mensaje || errorData.Message || 'Error al unirse a la sala');
+        }
     }
 
     static async salirDeSala(nombreJugador: string, salaId: number): Promise<{ mensaje: string }> {
@@ -101,15 +88,25 @@ export class SalaApiService {
         formData.append('nombreJugador', nombreJugador);
         formData.append('salaId', salaId.toString());
 
-        return this.request<{ mensaje: string }>('/Sala/SalirDeSala', {
-            method: 'POST',
-            body: formData,
-            headers: {}, // Remover Content-Type para FormData
-        });
+        try {
+            return await api.post('Sala/SalirDeSala', {
+                body: formData,
+            }).json<{ mensaje: string }>();
+        } catch (error: any) {
+            const errorData = await error.response?.json?.() ?? {};
+            throw new Error(errorData.mensaje || errorData.Message || 'Error al salir de la sala');
+        }
     }
 
     static async obtenerSalaPorCodigo(codigo: string): Promise<SalaDetalle> {
-        return this.request<SalaDetalle>(`/Sala/ObtenerSalaPorCodigo?codigo=${encodeURIComponent(codigo)}`);
+        try {
+            return await api.get(`Sala/ObtenerSalaPorCodigo`, {
+                searchParams: { codigo }
+            }).json<SalaDetalle>();
+        } catch (error: any) {
+            const errorData = await error.response?.json?.() ?? {};
+            throw new Error(errorData.mensaje || errorData.Message || 'Error al obtener sala');
+        }
     }
 
     static async obtenerSalasDisponibles(): Promise<Array<{
@@ -120,14 +117,28 @@ export class SalaApiService {
         capacidad: number;
         creador?: string;
     }>> {
-        return this.request<Array<{
-            id: number;
-            nombre: string;
-            descripcion?: string;
-            jugadores: number;
-            capacidad: number;
-            creador?: string;
-        }>>('/Sala/ObtenerSalasDisponibles');
+        try {
+            return await api.get('Sala/ObtenerSalasDisponibles').json<Array<{
+                id: number;
+                nombre: string;
+                descripcion?: string;
+                jugadores: number;
+                capacidad: number;
+                creador?: string;
+            }>>();
+        } catch (error: any) {
+            const errorData = await error.response?.json?.() ?? {};
+            throw new Error(errorData.mensaje ?? errorData.Message ?? 'Error al obtener salas');
+        }
+    }
+
+    static async iniciarCuentaRegresiva(codigo: string): Promise<{ mensaje: string }> {
+        try {
+            return await api.post(`Sala/iniciar-cuenta-regresiva/${codigo}`).json<{ mensaje: string }>();
+        } catch (error: any) {
+            const errorData = await error.response?.json?.() ?? {};
+            throw new Error(errorData.mensaje ?? errorData.Message ?? 'Error al iniciar cuenta regresiva');
+        }
     }
 
     static createEventSource(codigo: string): EventSource {
