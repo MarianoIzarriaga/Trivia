@@ -6,3 +6,4 @@ trivia-backend/obj/project.nuget.cache
 trivia-backend/obj/trivia-backend.csproj.nuget.dgspec.json
 trivia-backend/obj/trivia-backend.csproj.nuget.g.props
 trivia-backend/obj/trivia-backend.csproj.nuget.g.targets
+trivia-backend/obj/project.assets.json

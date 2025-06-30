@@ -204,7 +204,6 @@ public class JuegoService : IJuegoService
         }
 
         if (!estadoJuego.JuegoTerminado)
-        {
             return Task.FromResult<ResultadosDto?>(null);
         }
 
