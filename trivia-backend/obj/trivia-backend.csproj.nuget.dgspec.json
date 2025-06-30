@@ -1,25 +1,31 @@
 {
   "format": 1,
   "restore": {
-    "/media/macrox/DFiles/Projects/ort/Trivia/trivia-backend/trivia-backend.csproj": {}
+    "C:\\Users\\pato1\\Downloads\\Trivia\\trivia-backend\\trivia-backend.csproj": {}
   },
   "projects": {
-    "/media/macrox/DFiles/Projects/ort/Trivia/trivia-backend/trivia-backend.csproj": {
+    "C:\\Users\\pato1\\Downloads\\Trivia\\trivia-backend\\trivia-backend.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "/media/macrox/DFiles/Projects/ort/Trivia/trivia-backend/trivia-backend.csproj",
+        "projectUniqueName": "C:\\Users\\pato1\\Downloads\\Trivia\\trivia-backend\\trivia-backend.csproj",
         "projectName": "trivia-backend",
-        "projectPath": "/media/macrox/DFiles/Projects/ort/Trivia/trivia-backend/trivia-backend.csproj",
-        "packagesPath": "/home/macrox/.nuget/packages/",
-        "outputPath": "/media/macrox/DFiles/Projects/ort/Trivia/trivia-backend/obj/",
+        "projectPath": "C:\\Users\\pato1\\Downloads\\Trivia\\trivia-backend\\trivia-backend.csproj",
+        "packagesPath": "C:\\Users\\pato1\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\pato1\\Downloads\\Trivia\\trivia-backend\\obj\\",
         "projectStyle": "PackageReference",
+        "fallbackFolders": [
+          "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
+        ],
         "configFilePaths": [
-          "/home/macrox/.nuget/NuGet/NuGet.Config"
+          "C:\\Users\\pato1\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
         "originalTargetFrameworks": [
           "net8.0"
         ],
         "sources": {
+          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
           "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
@@ -37,7 +43,8 @@
           "enableAudit": "true",
           "auditLevel": "low",
           "auditMode": "direct"
-        }
+        },
+        "SdkAnalysisLevel": "9.0.300"
       },
       "frameworks": {
         "net8.0": {
@@ -77,7 +84,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "/usr/share/dotnet/sdk/8.0.409/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.300/PortableRuntimeIdentifierGraph.json"
         }
       }
     }
