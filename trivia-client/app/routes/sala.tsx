@@ -29,6 +29,7 @@ export default function Sala() {
 
     // Efecto para manejar la redirección cuando termine la cuenta regresiva
     useEffect(() => {
+        console.log("CuasASSSSSSSSSSSSSS", sala.countdown);
         if (sala.countdown?.isActive === false && sala.countdown?.value === 0) {
             // Redirigir al juego después de que termine la cuenta regresiva
             setTimeout(() => {

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { JuegoApiService, EstadoJuegoResponse, ResultadosResponse } from "../services/juegoService";
+import { JuegoApiService } from "../services/juegoService";
 
 export function meta() {
     return [
@@ -53,6 +53,7 @@ export default function JuegoSync() {
     });
 
     useEffect(() => {
+        console.log("Iniciando juego...");
         // Obtener parámetros de la URL
         const url = new URL(window.location.href);
         const code = url.searchParams.get("code");
@@ -81,6 +82,7 @@ export default function JuegoSync() {
 
             const pregunta = await JuegoApiService.obtenerPreguntaActual(salaId);
             const estado = await JuegoApiService.obtenerEstadoJuego(salaId);
+            console.log("ACA");
 
             setGameState(prev => ({
                 ...prev,

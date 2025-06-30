@@ -146,7 +146,7 @@ public class SalaController : Controller
         {
             SalaId = sala.Id,
             Codigo = codigo,
-            CountdownValue = 5,
+            CountdownValue = 6,
             IsActive = true,
             StartTime = DateTime.UtcNow
         };
