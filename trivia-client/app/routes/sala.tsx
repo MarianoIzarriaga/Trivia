@@ -50,8 +50,15 @@ export default function Sala() {
         }
     };
 
-    if (sala.countdown?.value === 1 && sala.esHost) {
-        iniciarJuego();
+    if (sala.countdown?.value === 1) {
+        if (sala.esHost) {
+            iniciarJuego(); // Solo el host llama al backend
+        } else {
+            // Los demás jugadores solo redirigen
+            setTimeout(() => {
+                window.location.href = `/juego?code=${sala.codigo}&name=${encodeURIComponent(sala.nombreJugador)}&salaId=${sala.id}`;
+            }, 1000);
+        }
     }
 }, [sala.countdown, sala.codigo, sala.nombreJugador, sala.id, sala.esHost]);
 
