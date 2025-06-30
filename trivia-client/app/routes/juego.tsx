@@ -106,6 +106,7 @@ export default function JuegoSync() {
             setGameState(prev => ({ ...prev, cargando: true, error: null }));
 
             const pregunta = await JuegoApiService.obtenerPreguntaActual(salaId);
+            console.log("PREGUNTA OBTENIDA", pregunta);
             const estado = await JuegoApiService.obtenerEstadoJuego(salaId);
             console.log("ACA");
 

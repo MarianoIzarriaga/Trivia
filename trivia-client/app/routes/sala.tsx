@@ -29,15 +29,31 @@ export default function Sala() {
 
     // Efecto para manejar la redirección cuando termine la cuenta regresiva
     useEffect(() => {
-        console.log("CuasASSSSSSSSSSSSSS", sala.countdown);
-        if (sala.countdown?.value === 1) {
-            window.location.href = `/juego?code=${sala.codigo}&name=${encodeURIComponent(sala.nombreJugador)}&salaId=${sala.id}`;
-            // Redirigir al juego después de que termine la cuenta regresiva
-            console.log("La cuenta regresiva ha terminado");
+        const iniciarJuego = async () => {
+        try {
+            const response = await fetch(`/api/juego/iniciar/${sala.id}`, {
+                method: "POST"
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                console.error("Error al iniciar el juego:", error.mensaje);
+                return;
+            }
+
+            // Esperamos un segundo para que el backend guarde el estado del juego
             setTimeout(() => {
-            }, 1000); // Esperar 1 segundo para que el usuario vea que llegó a 0
+                window.location.href = `/juego?code=${sala.codigo}&name=${encodeURIComponent(sala.nombreJugador)}&salaId=${sala.id}`;
+            }, 1000);
+        } catch (error) {
+            console.error("Fallo al iniciar juego:", error);
         }
-    }, [sala.countdown, sala.codigo, sala.nombreJugador, sala.id]);
+    };
+
+    if (sala.countdown?.value === 1 && sala.esHost) {
+        iniciarJuego();
+    }
+}, [sala.countdown, sala.codigo, sala.nombreJugador, sala.id, sala.esHost]);
 
     const handleStartGame = async () => {
         if (sala.esHost && sala.jugadores.length >= 2) {
