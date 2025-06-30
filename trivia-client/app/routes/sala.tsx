@@ -30,10 +30,11 @@ export default function Sala() {
     // Efecto para manejar la redirección cuando termine la cuenta regresiva
     useEffect(() => {
         console.log("CuasASSSSSSSSSSSSSS", sala.countdown);
-        if (sala.countdown?.isActive === false && sala.countdown?.value === 0) {
+        if (sala.countdown?.value === 1) {
+            window.location.href = `/juego?code=${sala.codigo}&name=${encodeURIComponent(sala.nombreJugador)}&salaId=${sala.id}`;
             // Redirigir al juego después de que termine la cuenta regresiva
+            console.log("La cuenta regresiva ha terminado");
             setTimeout(() => {
-                window.location.href = `/juego?code=${sala.codigo}&name=${encodeURIComponent(sala.nombreJugador)}&salaId=${sala.id}`;
             }, 1000); // Esperar 1 segundo para que el usuario vea que llegó a 0
         }
     }, [sala.countdown, sala.codigo, sala.nombreJugador, sala.id]);

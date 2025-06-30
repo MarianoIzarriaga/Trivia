@@ -52,7 +52,7 @@ public class JuegoService : IJuegoService
 
             _juegosPorSala[salaId] = estadoJuego;
 
-            var primeraPregunta = preguntas.First();
+            var primeraPregunta = preguntas[0];
             return (true, "Juego iniciado exitosamente.", primeraPregunta);
         }
         catch (Exception ex)
@@ -134,30 +134,23 @@ public class JuegoService : IJuegoService
         }
     }
 
-    public async Task<(bool Success, string Message)> FinalizarJuegoAsync(int salaId)
+    public Task<(bool Success, string Message)> FinalizarJuegoAsync(int salaId)
     {
-        try
+        if (_juegosPorSala.TryGetValue(salaId, out var estadoJuego))
         {
-            if (_juegosPorSala.TryGetValue(salaId, out var estadoJuego))
-            {
-                estadoJuego.JuegoTerminado = true;
+            estadoJuego.JuegoTerminado = true;
 
-                // Obtener ganador
-                var ganador = estadoJuego.JugadoresPuntuacion
-                    .OrderByDescending(kvp => kvp.Value)
-                    .First();
+            // Obtener ganador
+            var ganador = estadoJuego.JugadoresPuntuacion
+                .OrderByDescending(kvp => kvp.Value)
+                .First();
 
-                _juegosPorSala.Remove(salaId);
+            _juegosPorSala.Remove(salaId);
 
-                return (true, $"Juego finalizado. Ganador: {ganador.Key} con {ganador.Value} puntos.");
-            }
-
-            return (false, "No hay un juego activo en esta sala.");
+            return Task.FromResult<(bool, string)>((true, $"Juego finalizado. Ganador: {ganador.Key} con {ganador.Value} puntos."));
         }
-        catch (Exception ex)
-        {
-            return (false, $"Error al finalizar el juego: {ex.Message}");
-        }
+
+        return Task.FromResult<(bool, string)>((false, "No hay un juego activo en esta sala."));
     }
 
     public async Task<List<Pregunta>> ObtenerPreguntasAsync(int cantidad = 10)
@@ -205,7 +198,6 @@ public class JuegoService : IJuegoService
 
         if (!estadoJuego.JuegoTerminado)
             return Task.FromResult<ResultadosDto?>(null);
-        }
 
         var ganador = estadoJuego.JugadoresPuntuacion
             .OrderByDescending(p => p.Value)
@@ -221,7 +213,6 @@ public class JuegoService : IJuegoService
     }
 }
 
-// Clase auxiliar para manejar el estado del juego
 public class JuegoEstado
 {
     public int SalaId { get; set; }

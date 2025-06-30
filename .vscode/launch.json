@@ -1,0 +1,28 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": ".NET Core Launch (trivia-backend)",
+      "type": "coreclr",
+      "request": "launch",
+      "program": "${workspaceFolder}/trivia-backend/bin/Debug/net8.0/trivia-backend.dll",
+      "args": [],
+      "cwd": "${workspaceFolder}/trivia-backend",
+      "stopAtEntry": false,
+      "requireExactSource": false,
+      "serverReadyAction": {
+        "action": "openExternally",
+        "pattern": "Now listening on: (https?://\\S+)"
+      },
+      "env": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "ASPNETCORE_URLS": "http://localhost:5000",
+        "ASPNETCORE_HTTPS_PORT": ""
+      },
+      "sourceFileMap": {
+        "/Views": "${workspaceFolder}/trivia-backend/Views"
+      },
+      "preLaunchTask": "build-trivia-backend"
+    }
+  ]
+}

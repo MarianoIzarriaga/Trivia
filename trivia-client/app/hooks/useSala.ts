@@ -57,6 +57,7 @@ export function useSala(): UseSalaReturn {
 
             eventSource.onmessage = (event) => {
                 try {
+                    console.log('SSE message received:', event.data);
                     const salaData = JSON.parse(event.data);
                     setSala(prev => ({
                         ...prev,

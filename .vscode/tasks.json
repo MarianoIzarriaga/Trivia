@@ -1,0 +1,15 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "build-trivia-backend",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "build",
+                "${workspaceFolder}/trivia-backend/trivia-backend.csproj"
+            ],
+            "problemMatcher": "$msCompile"
+        }
+    ]
+}

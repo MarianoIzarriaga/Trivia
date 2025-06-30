@@ -153,14 +153,16 @@ public class SalaController : Controller
 
         _countdownStates[codigo] = countdownState;
 
-        // Iniciar tarea en segundo plano para manejar la cuenta regresiva
-        _ = Task.Run(async () => await HandleCountdown(codigo, countdownState.SalaId));
+
+        await HandleCountdown(codigo, countdownState.SalaId);
 
         return Ok(new { mensaje = "Cuenta regresiva iniciada" });
     }
 
     private async Task HandleCountdown(string codigo, int salaId)
     {
+
+
         if (!_countdownStates.TryGetValue(codigo, out var state))
             return;
 
