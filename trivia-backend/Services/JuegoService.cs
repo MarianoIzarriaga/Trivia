@@ -39,7 +39,6 @@ public class JuegoService : IJuegoService
                 return (false, "No hay preguntas disponibles para el juego.", null);
             }
 
-            // Inicializar el estado del juego
             var estadoJuego = new JuegoEstado
             {
                 SalaId = salaId,
@@ -67,12 +66,10 @@ public class JuegoService : IJuegoService
         {
             var esCorrecta = await ValidarRespuestaAsync(preguntaId, respuestaId);
 
-            // Buscar el estado del juego por sala del jugador
             var estadoJuego = _juegosPorSala.Values.FirstOrDefault(j => j.JugadoresPuntuacion != null && j.JugadoresPuntuacion.ContainsKey(nombreJugador));
 
             if (estadoJuego != null)
             {
-                // Inicializar progreso si no existe
                 if (estadoJuego.ProgresoPorJugador == null)
                     estadoJuego.ProgresoPorJugador = new Dictionary<string, int>();
                 if (!estadoJuego.ProgresoPorJugador.ContainsKey(nombreJugador))
@@ -82,9 +79,8 @@ public class JuegoService : IJuegoService
                 {
                     if (estadoJuego.JugadoresPuntuacion == null)
                         estadoJuego.JugadoresPuntuacion = new Dictionary<string, int>();
-                    estadoJuego.JugadoresPuntuacion[nombreJugador] += 10; // 10 puntos por respuesta correcta
+                    estadoJuego.JugadoresPuntuacion[nombreJugador] += 10; 
                 }
-                // NO avanzar el índice aquí
             }
             else
             {
@@ -114,7 +110,7 @@ public class JuegoService : IJuegoService
         }
         else
         {
-            index = estadoJuego.PreguntaActualIndex; // fallback for legacy/host
+            index = estadoJuego.PreguntaActualIndex;
         }
 
         if (index >= estadoJuego.Preguntas.Count)
@@ -124,7 +120,6 @@ public class JuegoService : IJuegoService
 
         var pregunta = estadoJuego.Preguntas[index];
 
-        // Cargar las respuestas de la base de datos
         return await _db.Preguntas
             .Include(p => p.Respuestas)
             .FirstOrDefaultAsync(p => p.Id == pregunta.Id);
@@ -139,16 +134,13 @@ public class JuegoService : IJuegoService
                 return (false, "No hay un juego activo en esta sala.", null);
             }
 
-            // Inicializar progreso si no existe
             if (!estadoJuego.ProgresoPorJugador.ContainsKey(nombreJugador))
                 estadoJuego.ProgresoPorJugador[nombreJugador] = 0;
 
-            // Avanzar el índice de pregunta SOLO para este jugador
             estadoJuego.ProgresoPorJugador[nombreJugador]++;
 
             int indice = estadoJuego.ProgresoPorJugador[nombreJugador];
 
-            // Verificar si TODOS los jugadores terminaron
             bool todosTerminaron = estadoJuego.ProgresoPorJugador.Count > 0 &&
                 estadoJuego.ProgresoPorJugador.All(kvp => kvp.Value >= estadoJuego.Preguntas.Count);
             if (todosTerminaron)
@@ -158,7 +150,6 @@ public class JuegoService : IJuegoService
 
             if (indice >= estadoJuego.Preguntas.Count)
             {
-                // Juego terminado para este jugador
                 return (false, "El juego ha terminado para este jugador.", null);
             }
 
@@ -176,7 +167,6 @@ public class JuegoService : IJuegoService
 
     private async Task GuardarResultadosSiNoExistenAsync(int salaId, string ganador, Dictionary<string, int> puntuaciones)
     {
-        // Verificar si ya existen resultados para esta sala
         bool existe = await _db.ResultadosJuego.AnyAsync(r => r.SalaId == salaId);
         if (existe) return;
         var resultado = new ResultadoJuego
@@ -202,7 +192,6 @@ public class JuegoService : IJuegoService
             await GuardarResultadosSiNoExistenAsync(salaId, ganador.Key ?? "Nadie", estadoJuego.JugadoresPuntuacion);
             return (true, $"Juego finalizado. Ganador: {ganador.Key} con {ganador.Value} puntos.");
         }
-        // Si no está en memoria, no se puede finalizar ni guardar
         return (false, "No hay un juego activo en esta sala.");
     }
 
@@ -210,7 +199,7 @@ public class JuegoService : IJuegoService
     {
         return await _db.Preguntas
             .Include(p => p.Respuestas)
-            .OrderBy(x => Guid.NewGuid()) // Orden aleatorio
+            .OrderBy(x => Guid.NewGuid())
             .Take(cantidad)
             .ToListAsync();
     }
@@ -230,11 +219,9 @@ public class JuegoService : IJuegoService
             return Task.FromResult<JuegoEstadoDto?>(null);
         }
 
-        // --- CORRECCIÓN: Solo terminar si TODOS los jugadores de la sala terminaron ---
         if (!estadoJuego.JuegoTerminado && estadoJuego.ProgresoPorJugador.Count > 0)
         {
             int total = estadoJuego.Preguntas.Count;
-            // Obtener todos los jugadores de la sala
             var jugadoresSala = estadoJuego.JugadoresPuntuacion.Keys;
             bool todosTerminaron = jugadoresSala.All(nombre =>
                 estadoJuego.ProgresoPorJugador.TryGetValue(nombre, out var idx) && idx >= (total - 1)
@@ -244,7 +231,6 @@ public class JuegoService : IJuegoService
                 estadoJuego.JuegoTerminado = true;
             }
         }
-        // --- FIN CORRECCIÓN ---
 
         var dto = new JuegoEstadoDto
         {
