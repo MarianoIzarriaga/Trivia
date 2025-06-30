@@ -25,6 +25,7 @@ export function useJuegoStream({ salaId, onUpdate, onError }: {
         es.onmessage = (event) => {
             try {
                 const data = JSON.parse(event.data);
+                console.log("Recibí del stream:", data);
                 onUpdate(data);
             } catch (err) {
                 if (onError) onError(err);
