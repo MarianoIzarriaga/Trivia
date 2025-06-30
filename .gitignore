@@ -1,3 +1,8 @@
 trivia-backend/bin/Debug/net8.0/appsettings.json
 trivia-backend/bin/Debug/*
 trivia-backend/obj/Debug/*
+trivia-backend/obj/project.assets.json
+trivia-backend/obj/project.nuget.cache
+trivia-backend/obj/trivia-backend.csproj.nuget.dgspec.json
+trivia-backend/obj/trivia-backend.csproj.nuget.g.props
+trivia-backend/obj/trivia-backend.csproj.nuget.g.targets
