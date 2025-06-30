@@ -9,7 +9,7 @@ export function meta() {
 }
 
 export default function Sala() {
-    const { sala, salirDeSala, iniciarCuentaRegresiva, limpiarError } = useSala();
+    const { sala, salirDeSala, iniciarCuentaRegresiva, limpiarError, cargarSalaPorCodigo } = useSala();
 
     useEffect(() => {
         // Verificar que estamos conectados a una sala
@@ -18,42 +18,51 @@ export default function Sala() {
             const url = new URL(window.location.href);
             const code = url.searchParams.get("code");
             const playerName = url.searchParams.get("name");
+            const isHost = url.searchParams.get("host") === "true";
 
             if (!code || !playerName) {
                 // Redirigir al home si no hay datos válidos
                 window.location.href = "/";
                 return;
             }
+
+            // Llama a cargarSalaPorCodigo para restaurar el estado esHost
+            cargarSalaPorCodigo(code, playerName, isHost);
         }
-    }, [sala.conectado, sala.cargando]);
+    }, [sala.conectado, sala.cargando, cargarSalaPorCodigo]);
 
     // Efecto para manejar la redirección cuando termine la cuenta regresiva
     useEffect(() => {
+        const goToGame = () => {
+            window.location.href = `/juego?code=${sala.codigo}&name=${encodeURIComponent(sala.nombreJugador)}&salaId=${sala.id}`;
+        };
+
         const iniciarJuego = async () => {
-        try {
-            const response = await fetch(`/api/juego/iniciar/${sala.id}`, {
-                method: "POST"
-            });
+            try {
+                const response = await fetch(`/api/juego/iniciar/${sala.id}`, {
+                    method: "POST"
+                });
 
-            if (!response.ok) {
-                const error = await response.json();
-                console.error("Error al iniciar el juego:", error.mensaje);
-                return;
+                if (!response.ok) {
+                    const error = await response.json();
+                    console.error("Error al iniciar el juego:", error.mensaje);
+                    return;
+                }
+
+                setTimeout(goToGame, 1000);
+            } catch (error) {
+                console.error("Fallo al iniciar juego:", error);
             }
+        };
 
-            // Esperamos un segundo para que el backend guarde el estado del juego
-            setTimeout(() => {
-                window.location.href = `/juego?code=${sala.codigo}&name=${encodeURIComponent(sala.nombreJugador)}&salaId=${sala.id}`;
-            }, 1000);
-        } catch (error) {
-            console.error("Fallo al iniciar juego:", error);
+        if (sala.countdown?.value === 1) {
+            if (sala.esHost) {
+                iniciarJuego();
+            } else {
+                goToGame();
+            }
         }
-    };
-
-    if (sala.countdown?.value === 1 && sala.esHost) {
-        iniciarJuego();
-    }
-}, [sala.countdown, sala.codigo, sala.nombreJugador, sala.id, sala.esHost]);
+    }, [sala.countdown, sala.codigo, sala.nombreJugador, sala.id, sala.esHost]);
 
     const handleStartGame = async () => {
         if (sala.esHost && sala.jugadores.length >= 2) {

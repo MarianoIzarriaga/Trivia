@@ -73,48 +73,50 @@ export default function JuegoSync() {
             salaId: parseInt(salaId)
         }));
 
-        // Cargar pregunta inicial
-        cargarPreguntaActual(parseInt(salaId));
+        cargarPreguntaActual(parseInt(salaId), name);
     }, []);
 
     // --- SINCRONIZACIÓN EN TIEMPO REAL ---
     useJuegoStream({
         salaId: gameState.salaId,
         onUpdate: (data) => {
-            setGameState(prev => {
-                // Si cambió la pregunta, recargar la pregunta completa
-                if (data.preguntaActual !== prev.preguntaNumero) {
-                    if (gameState.salaId) cargarPreguntaActual(gameState.salaId);
+            // Detectar si el jugador actual terminó
+            let jugadorTermino = false;
+            if (data.progresoPorJugador && gameState.nombreJugador) {
+                const idx = data.progresoPorJugador[gameState.nombreJugador];
+                if (typeof idx === 'number' && idx >= (data.totalPreguntas - 1)) {
+                    jugadorTermino = true;
                 }
-                return {
-                    ...prev,
-                    puntuaciones: data.puntuaciones,
-                    preguntaNumero: data.preguntaActual,
-                    totalPreguntas: data.totalPreguntas,
-                    juegoTerminado: data.juegoTerminado,
-                    juegoIniciado: data.juegoIniciado
-                };
-            });
+            }
+            setGameState(prev => ({
+                ...prev,
+                puntuaciones: data.puntuaciones,
+                totalPreguntas: data.totalPreguntas,
+                juegoTerminado: data.juegoTerminado || jugadorTermino,
+                juegoIniciado: data.juegoIniciado
+            }));
         },
         onError: (err) => {
             setGameState(prev => ({ ...prev, error: "Conexión perdida con el servidor." }));
         }
     });
 
-    const cargarPreguntaActual = async (salaId: number) => {
+    const cargarPreguntaActual = async (salaId: number, nombreJugadorParam?: string) => {
         try {
             setGameState(prev => ({ ...prev, cargando: true, error: null }));
 
-            const pregunta = await JuegoApiService.obtenerPreguntaActual(salaId);
-            console.log("PREGUNTA OBTENIDA", pregunta);
-            const estado = await JuegoApiService.obtenerEstadoJuego(salaId);
-            console.log("ACA");
+            const nombreJugador = nombreJugadorParam ?? (typeof gameState.nombreJugador === 'string' && gameState.nombreJugador.length > 0 ? gameState.nombreJugador : undefined);
+            if (!nombreJugador) throw new Error("Falta el nombre del jugador");
+
+            const estado = await JuegoApiService.obtenerEstadoJuego(salaId, nombreJugador);
+            let pregunta = estado.preguntaActualJugador;
+            if (!pregunta) throw new Error("No se pudo obtener la pregunta actual del jugador");
 
             setGameState(prev => ({
                 ...prev,
                 preguntaActual: pregunta,
                 puntuaciones: estado.puntuaciones,
-                preguntaNumero: estado.preguntaActual,
+                preguntaNumero: estado.preguntaNumeroJugador ?? prev.preguntaNumero, // usa el número individual
                 totalPreguntas: estado.totalPreguntas,
                 juegoTerminado: estado.juegoTerminado,
                 cargando: false
@@ -186,23 +188,22 @@ export default function JuegoSync() {
 
     const siguientePregunta = async () => {
         if (!gameState.salaId) return;
-
         try {
-            const response = await JuegoApiService.siguientePregunta(gameState.salaId);
-
+            await JuegoApiService.siguientePregunta(gameState.salaId, gameState.nombreJugador);
+            // Recarga el estado y la pregunta individual
+            await cargarPreguntaActual(gameState.salaId, gameState.nombreJugador);
             setGameState(prev => ({
                 ...prev,
-                preguntaActual: response.pregunta ? {
-                    id: response.pregunta.id,
-                    texto: response.pregunta.texto,
-                    respuestas: response.pregunta.respuestas
-                } : null,
                 respuestaSeleccionada: null,
-                mostrandoResultado: false,
-                preguntaNumero: prev.preguntaNumero + 1
+                mostrandoResultado: false
+                // Elimina cualquier incremento local de preguntaNumero
             }));
         } catch (error) {
-            await cargarResultados(gameState.salaId);
+            setGameState(prev => ({
+                ...prev,
+                error: error instanceof Error ? error.message : 'Error al cargar siguiente pregunta',
+                cargando: false
+            }));
         }
     };
 
@@ -243,6 +244,67 @@ export default function JuegoSync() {
 
         const puntuacionesOrdenadas = Object.entries(gameState.puntuaciones)
             .sort(([, a], [, b]) => b - a);
+
+        // --- CORRECCIÓN: solo mostrar 'Resultados pendientes...' si el jugador terminó pero el juego global NO ---
+        const jugadorTermino = (() => {
+            if (gameState.preguntaNumero >= gameState.totalPreguntas) return true;
+            // Si hay progresoPorJugador en el último stream, úsalo
+            const lastStream = (window as any).lastJuegoStreamData;
+            if (lastStream && lastStream.progresoPorJugador && gameState.nombreJugador) {
+                const idx = lastStream.progresoPorJugador[gameState.nombreJugador];
+                if (typeof idx === 'number' && idx >= (gameState.totalPreguntas - 1)) return true;
+            }
+            return false;
+        })();
+        if (jugadorTermino && !gameState.juegoTerminado) {
+            // El jugador terminó pero el juego global no
+            return (
+                <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-yellow-50 to-yellow-100 dark:from-gray-900 dark:to-gray-800">
+                    <div className="text-center">
+                        <img
+                            src="/images/logo-trivia.png"
+                            alt="Trivia Logo"
+                            className="mx-auto h-16 w-auto mb-8"
+                        />
+                        <div className="text-4xl font-bold text-yellow-600 dark:text-yellow-400 mb-4">
+                            Resultados pendientes...
+                        </div>
+                        <p className="text-gray-600 dark:text-gray-400">
+                            Esperando a que todos los jugadores terminen para mostrar los resultados finales.
+                        </p>
+                        <div className="mt-8">
+                            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+                                Puntuaciones actuales
+                            </h3>
+                            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                                {Object.entries(gameState.puntuaciones)
+                                    .sort(([, a], [, b]) => b - a)
+                                    .map(([nombre, puntos]) => (
+                                        <div
+                                            key={nombre}
+                                            className={`p-3 rounded-lg text-center ${nombre === gameState.nombreJugador
+                                                ? "bg-blue-50 border border-blue-200 dark:bg-blue-900/20 dark:border-blue-700"
+                                                : "bg-gray-50 dark:bg-gray-700"
+                                                }`}
+                                        >
+                                            <div className="font-medium text-gray-900 dark:text-gray-100 truncate">
+                                                {nombre}
+                                                {nombre === gameState.nombreJugador && (
+                                                    <span className="text-blue-600 dark:text-blue-400 text-xs ml-1">(Tú)</span>
+                                                )}
+                                            </div>
+                                            <div className="text-lg font-bold text-gray-600 dark:text-gray-300">
+                                                {puntos} pts
+                                            </div>
+                                        </div>
+                                    ))}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+        // --- FIN CORRECCIÓN ---
 
         return (
             <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-100 dark:from-gray-900 dark:to-gray-800 py-8">
@@ -289,7 +351,14 @@ export default function JuegoSync() {
                                 >
                                     <div className="flex items-center">
                                         <span className="text-2xl mr-3">
-                                            {index === 0 ? "🥇" : index === 1 ? "🥈" : index === 2 ? "🥉" : `${index + 1}°`}
+                                            {(() => {
+                                                let podium;
+                                                if (index === 0) podium = "🥇";
+                                                else if (index === 1) podium = "🥈";
+                                                else if (index === 2) podium = "🥉";
+                                                else podium = `${index + 1}°`;
+                                                return podium;
+                                            })()}
                                         </span>
                                         <span className="font-medium text-gray-900 dark:text-gray-100">
                                             {nombre}
@@ -326,7 +395,7 @@ export default function JuegoSync() {
                 <div className="text-center">
                     <h1 className="text-2xl font-bold text-red-600 mb-4">Error</h1>
                     <p className="text-gray-600 dark:text-gray-400 mb-4">
-                        {gameState.error || "No se pudo cargar la pregunta"}
+                        {gameState.error ?? "No se pudo cargar la pregunta"}
                     </p>
                     <button
                         onClick={volverAlInicio}

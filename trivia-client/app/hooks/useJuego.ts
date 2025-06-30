@@ -21,7 +21,7 @@ export interface UseJuegoReturn {
     juego: JuegoState;
     iniciarJuego: (salaId: number) => Promise<void>;
     responderPregunta: (respuestaId: number, nombreJugador: string) => Promise<void>;
-    siguientePregunta: () => Promise<void>;
+    siguientePregunta: (nombreJugador?: string) => Promise<void>;
     finalizarJuego: () => Promise<void>;
     limpiarError: () => void;
 }
@@ -112,9 +112,13 @@ export function useJuego(): UseJuegoReturn {
         }
     }, [juego.preguntaActual, juego.esperandoRespuesta]);
 
-    const siguientePregunta = useCallback(async () => {
+    const siguientePregunta = useCallback(async (nombreJugador?: string) => {
         if (!juego.salaId) return;
-
+        const jugador = nombreJugador ?? (juego as any).nombreJugador;
+        if (!jugador) {
+            setJuego(prev => ({ ...prev, error: 'Falta el nombre del jugador para avanzar pregunta' }));
+            return;
+        }
         setJuego(prev => ({
             ...prev,
             cargando: true,
@@ -122,10 +126,8 @@ export function useJuego(): UseJuegoReturn {
             respuestaSeleccionada: undefined,
             error: null
         }));
-
         try {
-            const response = await JuegoApiService.siguientePregunta(juego.salaId);
-
+            const response = await JuegoApiService.siguientePregunta(juego.salaId, jugador);
             if (response.pregunta) {
                 setJuego(prev => ({
                     ...prev,
@@ -134,7 +136,6 @@ export function useJuego(): UseJuegoReturn {
                     cargando: false,
                 }));
             } else {
-                // Juego terminado
                 setJuego(prev => ({
                     ...prev,
                     juegoTerminado: true,
@@ -149,7 +150,7 @@ export function useJuego(): UseJuegoReturn {
                 cargando: false,
             }));
         }
-    }, [juego.salaId]);
+    }, [juego.salaId, (juego as any).nombreJugador]);
 
     const finalizarJuego = useCallback(async () => {
         if (!juego.salaId) return;

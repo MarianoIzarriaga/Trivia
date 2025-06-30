@@ -54,6 +54,8 @@ export interface EstadoJuegoResponse {
     preguntaActual: number;
     totalPreguntas: number;
     puntuaciones: Record<string, number>;
+    preguntaActualJugador?: Pregunta;
+    preguntaNumeroJugador?: number;
 }
 
 export interface ResultadosResponse {
@@ -92,9 +94,22 @@ export class JuegoApiService {
         }
     }
 
-    static async siguientePregunta(salaId: number): Promise<JuegoResponse> {
+    static async obtenerPreguntaActualPorJugador(salaId: number, nombreJugador: string): Promise<Pregunta> {
         try {
-            return await api.post(`Juego/siguiente-pregunta/${salaId}`).json<JuegoResponse>();
+            return await api.post(`Juego/pregunta-actual/${salaId}`, {
+                json: { nombreJugador },
+            }).json<Pregunta>();
+        } catch (error: any) {
+            const errorData = await error.response?.json?.() ?? {};
+            throw new Error(errorData.mensaje ?? errorData.Message ?? 'Error al obtener pregunta');
+        }
+    }
+
+    static async siguientePregunta(salaId: number, nombreJugador: string): Promise<JuegoResponse> {
+        try {
+            return await api.post(`Juego/siguiente-pregunta/${salaId}`, {
+                json: { nombreJugador },
+            }).json<JuegoResponse>();
         } catch (error: any) {
             const errorData = await error.response?.json?.() ?? {};
             throw new Error(errorData.mensaje ?? errorData.Message ?? 'Error al obtener siguiente pregunta');
@@ -110,9 +125,12 @@ export class JuegoApiService {
         }
     }
 
-    static async obtenerEstadoJuego(salaId: number): Promise<EstadoJuegoResponse> {
+    static async obtenerEstadoJuego(salaId: number, nombreJugador?: string): Promise<EstadoJuegoResponse & { preguntaActualJugador?: Pregunta }> {
         try {
-            return await api.get(`Juego/estado/${salaId}`).json<EstadoJuegoResponse>();
+            const url = nombreJugador
+                ? `Juego/estado/${salaId}?nombreJugador=${encodeURIComponent(nombreJugador)}`
+                : `Juego/estado/${salaId}`;
+            return await api.get(url).json<EstadoJuegoResponse & { preguntaActualJugador?: Pregunta }>();
         } catch (error: any) {
             const errorData = await error.response?.json?.() ?? {};
             throw new Error(errorData.mensaje ?? errorData.Message ?? 'Error al obtener estado del juego');

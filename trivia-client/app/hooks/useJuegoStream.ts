@@ -6,6 +6,7 @@ export interface JuegoStreamData {
     preguntaActual: number;
     totalPreguntas: number;
     puntuaciones: Record<string, number>;
+    progresoPorJugador?: Record<string, number>; // nuevo campo opcional
 }
 
 export function useJuegoStream({ salaId, onUpdate, onError }: {

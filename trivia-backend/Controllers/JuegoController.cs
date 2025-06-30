@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using trivia_backend.Services;
 
 namespace trivia_backend.Controllers;
@@ -88,10 +89,15 @@ public class JuegoController : ControllerBase
         });
     }
 
-    [HttpPost("siguiente-pregunta/{salaId}")]
-    public async Task<IActionResult> SiguientePregunta(int salaId)
+    public class SiguientePreguntaRequest
     {
-        var resultado = await _juegoService.SiguientePreguntaAsync(salaId);
+        public required string NombreJugador { get; set; }
+    }
+
+    [HttpPost("siguiente-pregunta/{salaId}")]
+    public async Task<IActionResult> SiguientePregunta(int salaId, [FromBody] SiguientePreguntaRequest request)
+    {
+        var resultado = await _juegoService.SiguientePreguntaAsync(salaId, request.NombreJugador);
 
         if (!resultado.Success)
         {
@@ -128,7 +134,7 @@ public class JuegoController : ControllerBase
     }
 
     [HttpGet("estado/{salaId}")]
-    public async Task<IActionResult> ObtenerEstadoJuego(int salaId)
+    public async Task<IActionResult> ObtenerEstadoJuego(int salaId, [FromQuery] string? nombreJugador = null)
     {
         var estado = await _juegoService.ObtenerEstadoJuegoAsync(salaId);
 
@@ -137,13 +143,38 @@ public class JuegoController : ControllerBase
             return NotFound(new { mensaje = "No se encontró el juego para esta sala." });
         }
 
+        // Obtener la pregunta actual del jugador si se provee el nombre
+        object? preguntaActualJugador = null;
+        int? preguntaNumeroJugador = null;
+        if (!string.IsNullOrEmpty(nombreJugador))
+        {
+            var pregunta = await _juegoService.ObtenerPreguntaActualAsync(salaId, nombreJugador);
+            if (pregunta != null)
+            {
+                preguntaActualJugador = new
+                {
+                    id = pregunta.Id,
+                    texto = pregunta.Texto,
+                    respuestas = pregunta.Respuestas.Select(r => new { id = r.Id, texto = r.Texto })
+                };
+            }
+            // Calcular el número de pregunta individual (1-based)
+            var idx = Services.JuegoService.GetProgresoPorJugador(salaId, nombreJugador);
+            if (idx.HasValue)
+            {
+                preguntaNumeroJugador = idx.Value + 1;
+            }
+        }
+
         return Ok(new
         {
             juegoIniciado = estado.JuegoIniciado,
             juegoTerminado = estado.JuegoTerminado,
             preguntaActual = estado.PreguntaActualIndex + 1,
             totalPreguntas = estado.TotalPreguntas,
-            puntuaciones = estado.JugadoresPuntuacion
+            puntuaciones = estado.JugadoresPuntuacion,
+            preguntaActualJugador,
+            preguntaNumeroJugador
         });
     }
 
@@ -154,7 +185,25 @@ public class JuegoController : ControllerBase
 
         if (resultados == null)
         {
-            return NotFound(new { mensaje = "No se encontraron resultados para esta sala." });
+            // Intentar buscar en la base de datos directamente si el servicio no lo hizo
+            using (var scope = HttpContext.RequestServices.CreateScope())
+            {
+                var db = scope.ServiceProvider.GetService(typeof(trivia_backend.Data.AppDbContext)) as trivia_backend.Data.AppDbContext;
+                if (db != null)
+                {
+                    var resultadoDb = await db.ResultadosJuego.FirstOrDefaultAsync(r => r.SalaId == salaId);
+                    if (resultadoDb != null)
+                    {
+                        var puntuaciones = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, int>>(resultadoDb.PuntuacionesJson) ?? new();
+                        return Ok(new
+                        {
+                            ganador = resultadoDb.Ganador,
+                            puntuacionesFinal = puntuaciones.OrderByDescending(p => p.Value)
+                        });
+                    }
+                }
+            }
+            return NotFound(new { mensaje = "No se encontraron resultados para esta sala. (ni en memoria ni en la base de datos)" });
         }
 
         return Ok(new
@@ -177,13 +226,15 @@ public class JuegoController : ControllerBase
             var estado = await _juegoService.ObtenerEstadoJuegoAsync(salaId);
             if (estado != null)
             {
+                var progresoPorJugador = Services.JuegoService.GetProgresoPorJugadorPorSala(salaId);
                 var data = new
                 {
                     juegoIniciado = estado.JuegoIniciado,
                     juegoTerminado = estado.JuegoTerminado,
                     preguntaActual = estado.PreguntaActualIndex + 1,
                     totalPreguntas = estado.TotalPreguntas,
-                    puntuaciones = estado.JugadoresPuntuacion
+                    puntuaciones = estado.JugadoresPuntuacion,
+                    progresoPorJugador // nuevo: para que el frontend sepa el estado de cada jugador
                 };
                 var json = System.Text.Json.JsonSerializer.Serialize(data);
                 await Response.WriteAsync($"data: {json}\n\n");
@@ -191,6 +242,27 @@ public class JuegoController : ControllerBase
             }
             await Task.Delay(2000, cancellationToken);
         }
+    }
+
+    public class PreguntaActualRequest
+    {
+        public required string NombreJugador { get; set; }
+    }
+
+    [HttpPost("pregunta-actual/{salaId}")]
+    public async Task<IActionResult> ObtenerPreguntaActualPorJugador(int salaId, [FromBody] PreguntaActualRequest request)
+    {
+        var pregunta = await _juegoService.ObtenerPreguntaActualAsync(salaId, request.NombreJugador);
+        if (pregunta == null)
+        {
+            return NotFound(new { mensaje = "No hay pregunta activa para este jugador en esta sala." });
+        }
+        return Ok(new
+        {
+            id = pregunta.Id,
+            texto = pregunta.Texto,
+            respuestas = pregunta.Respuestas.Select(r => new { id = r.Id, texto = r.Texto })
+        });
     }
 }
 
