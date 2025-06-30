@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { JuegoApiService } from "../services/juegoService";
+import { useJuegoStream } from "../hooks/useJuegoStream";
 
 export function meta() {
     return [
@@ -75,6 +76,30 @@ export default function JuegoSync() {
         // Cargar pregunta inicial
         cargarPreguntaActual(parseInt(salaId));
     }, []);
+
+    // --- SINCRONIZACIÓN EN TIEMPO REAL ---
+    useJuegoStream({
+        salaId: gameState.salaId,
+        onUpdate: (data) => {
+            setGameState(prev => {
+                // Si cambió la pregunta, recargar la pregunta completa
+                if (data.preguntaActual !== prev.preguntaNumero) {
+                    if (gameState.salaId) cargarPreguntaActual(gameState.salaId);
+                }
+                return {
+                    ...prev,
+                    puntuaciones: data.puntuaciones,
+                    preguntaNumero: data.preguntaActual,
+                    totalPreguntas: data.totalPreguntas,
+                    juegoTerminado: data.juegoTerminado,
+                    juegoIniciado: data.juegoIniciado
+                };
+            });
+        },
+        onError: (err) => {
+            setGameState(prev => ({ ...prev, error: "Conexión perdida con el servidor." }));
+        }
+    });
 
     const cargarPreguntaActual = async (salaId: number) => {
         try {
@@ -243,8 +268,8 @@ export default function JuegoSync() {
                                 <div
                                     key={nombre}
                                     className={`flex items-center justify-between p-3 rounded-lg ${nombre === gameState.nombreJugador
-                                            ? "bg-blue-50 border-2 border-blue-200 dark:bg-blue-900/20 dark:border-blue-700"
-                                            : "bg-gray-50 dark:bg-gray-700"
+                                        ? "bg-blue-50 border-2 border-blue-200 dark:bg-blue-900/20 dark:border-blue-700"
+                                        : "bg-gray-50 dark:bg-gray-700"
                                         }`}
                                 >
                                     <div className="flex items-center">
@@ -369,8 +394,8 @@ export default function JuegoSync() {
                     {gameState.mostrandoResultado && (
                         <div className="mt-6 text-center">
                             <div className={`text-2xl font-bold ${gameState.esRespuestaCorrecta
-                                    ? "text-green-600 dark:text-green-400"
-                                    : "text-red-600 dark:text-red-400"
+                                ? "text-green-600 dark:text-green-400"
+                                : "text-red-600 dark:text-red-400"
                                 }`}>
                                 {gameState.esRespuestaCorrecta ? "¡Correcto! 🎉" : "Incorrecto 😢"}
                             </div>
@@ -395,8 +420,8 @@ export default function JuegoSync() {
                                 <div
                                     key={nombre}
                                     className={`p-3 rounded-lg text-center ${nombre === gameState.nombreJugador
-                                            ? "bg-blue-50 border border-blue-200 dark:bg-blue-900/20 dark:border-blue-700"
-                                            : "bg-gray-50 dark:bg-gray-700"
+                                        ? "bg-blue-50 border border-blue-200 dark:bg-blue-900/20 dark:border-blue-700"
+                                        : "bg-gray-50 dark:bg-gray-700"
                                         }`}
                                 >
                                     <div className="font-medium text-gray-900 dark:text-gray-100 truncate">

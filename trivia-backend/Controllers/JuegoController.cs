@@ -163,6 +163,35 @@ public class JuegoController : ControllerBase
             puntuacionesFinal = resultados.PuntuacionesFinal.OrderByDescending(p => p.Value)
         });
     }
+
+    [HttpGet("stream/{salaId}")]
+    public async Task StreamEstadoJuego(int salaId)
+    {
+        Response.Headers["Content-Type"] = "text/event-stream";
+        Response.Headers["Cache-Control"] = "no-cache";
+        Response.Headers["Connection"] = "keep-alive";
+
+        var cancellationToken = HttpContext.RequestAborted;
+        while (!cancellationToken.IsCancellationRequested)
+        {
+            var estado = await _juegoService.ObtenerEstadoJuegoAsync(salaId);
+            if (estado != null)
+            {
+                var data = new
+                {
+                    juegoIniciado = estado.JuegoIniciado,
+                    juegoTerminado = estado.JuegoTerminado,
+                    preguntaActual = estado.PreguntaActualIndex + 1,
+                    totalPreguntas = estado.TotalPreguntas,
+                    puntuaciones = estado.JugadoresPuntuacion
+                };
+                var json = System.Text.Json.JsonSerializer.Serialize(data);
+                await Response.WriteAsync($"data: {json}\n\n");
+                await Response.Body.FlushAsync();
+            }
+            await Task.Delay(2000, cancellationToken);
+        }
+    }
 }
 
 public class ResponderRequest

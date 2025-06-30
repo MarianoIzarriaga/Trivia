@@ -9,6 +9,9 @@ export default defineConfig({
     port: 3000,
     host: true,
     cors: true,
+    proxy: {
+      '/api': 'http://localhost:5000',
+    },
   },
   define: {
     // Ayuda a manejar diferencias entre servidor y cliente
